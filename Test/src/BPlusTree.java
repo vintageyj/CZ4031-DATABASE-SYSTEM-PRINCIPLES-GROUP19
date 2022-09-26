@@ -179,7 +179,7 @@ public class BPlusTree {
      * @param newChildEntry key-node pair which points to split child, null if child was not split
      * @return a key-node pair if current node is split, otherwise null
      */
-    public KeyNodePair insertInternal(Node node, KeyValuePair entry, KeyNodePair newChildEntry) {
+    public KeyNodePair insertInternal(Node node, int recordKey, RecordPointer recordPointer, int nodeKey, Node newChildEntry) {
         if (root == null) {
             root = new LeafNode(n);
             node = root;

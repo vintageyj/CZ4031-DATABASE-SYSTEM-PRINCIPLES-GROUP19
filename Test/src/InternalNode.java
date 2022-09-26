@@ -7,24 +7,9 @@ import java.util.Arrays;
 public class InternalNode extends Node {
 
     /**
-     * Current number of pointers to child node
-     */
-    private int degree;
-
-    /**
-     * Array of keys
-     */
-    private int[] keys;
-
-    /**
      * Array of pointers to child node
      */
     private Node[] pointers;
-
-    /**
-     * Parent node
-     */
-    private InternalNode parent;
 
     /**
      * Construct an empty internal node specified with maximum number of keys
@@ -118,16 +103,6 @@ public class InternalNode extends Node {
         Arrays.fill(keys, null);
         Arrays.fill(pointers, null);
         degree = 0;
-    }
-
-    @Override
-    public int getDegree() {
-        return degree;
-    }
-
-    @Override
-    public void setDegree(int degree) {
-        this.degree = degree;
     }
 
     public Key[] getKeys() {

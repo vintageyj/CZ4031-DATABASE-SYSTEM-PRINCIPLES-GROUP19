@@ -5,26 +5,11 @@ import java.util.Arrays;
  * Implements Node interface
  */
 public class LeafNode extends Node {
-
-    /**
-     * Current number of entries in the node
-     */
-    private int degree;
-
-    /**
-     * Array of keys
-     */
-    private int[] keys;
     
     /**
      * Array of pointers to records
      */
-    private RecordPointer [] pointers;
-
-    /**
-     * Parent node
-     */
-    private InternalNode parent;
+    private RecordPointer[] pointers;
 
     /**
      * Right sibling of the leaf node
@@ -33,36 +18,60 @@ public class LeafNode extends Node {
 
     /**
      * Construct an empty leaf node specified with maximum number of keys
-     * @param n maximum number of keys in a node
+     * @param isRoot whether the node is a root node
      */
-    public LeafNode(int n, RecordPointer pointer) {
-        this(0, n, new int [n], new RecordPointer [n], null, null);
+    public LeafNode(boolean isRoot) {
+        this(0, isRoot, new int [getN()], new RecordPointer [getN()], null, null);
     }
 
     /**
+     * 
      * Construct a leaf node with current degree and array of key-value pairs
      * @param degree current degree of node
-     * @param kvPairs array of key-value pairs
+     * @param isRoot whether the node is a root node
+     * @param keys array of keys
+     * @param recordPointers array of pointers to records
      */
-    /*public LeafNode(int degree, KeyValuePair[] kvPairs) {
-        this(degree, n, kvPairs, null, null, null);
-    }*/
+    public LeafNode(int degree, boolean isRoot, int[] keys, RecordPointer[] recordPointers) {
+        this(degree, isRoot, keys, recordPointers, null, null);
+    }
 
     /**
      * Construct a leaf node with all attributes
-     * @param degree current degree
+     * @param degree current degree of node
      * @param kvPairs array representing key-value pairs of the node
      * @param parent parent node
      * @param leftSibling left sibling node
      * @param rightSibling right sibling node
      */
-    public LeafNode(int degree, int n, int[] keys, RecordPointer[] pointers, InternalNode parent, LeafNode rightSibling) {
-    	super(n, 0);
-        this.degree = degree;
-        this.keys = keys;
+    public LeafNode(int degree, boolean isRoot, int[] keys, RecordPointer[] pointers, InternalNode parent, LeafNode rightSibling) {
+    	super(0, degree, isRoot, keys, parent);
         this.pointers = pointers;
-        this.parent = parent;
         this.rightSibling = rightSibling;
+    }
+
+    /**
+     * Insert a record pointer to a specific index in the array of pointers, shift the pointers affected by the insertion
+     * and delete last pointer in the array
+     * @param pointer record pointer to be inserted
+     * @param pos index to insert
+     */
+    public void insertAndShift(RecordPointer pointer, int pos) {
+        for (int i = pointers.length - 1; i > pos; i--) {
+        	pointers[i] = pointers[i-1];
+        }
+        pointers[pos] = pointer;
+    }
+
+    /**
+     * Delete a record pointer on the specified index in the array of pointers, then shift the pointers accordingly
+     * @param pos position of pointer to be deleted
+     */
+    public void deleteAndShift(int pos) {
+        for (int i = pos; i < pointers.length - 1; ++i) {
+        	pointers[i] = pointers[i+1];
+        }
+        pointers[pointers.length - 1] = null;
     }
 
     /**
@@ -70,23 +79,25 @@ public class LeafNode extends Node {
      * @param entry key-value pair to be inserted
      */
     public void addSorted(int key, RecordPointer pointer) {
-        int index = Util.findIndexToInsert(keys, key);
-        Util.insertAndShift(kvPairs, entry, index);
-        ++degree;
+        int index = findIndexToInsert(key);
+        insertAndShift(key, index);
+        insertAndShift(pointer, index);
+        setDegree(getDegree()+1);
     }
 
     /**
-     * Delete an entry that matches the key value
-     * @param deleteKey key to delete
-     * @return the deleted entry if found, otherwise null
+     * Delete a record that matches the key value
+     * @param key key to delete
+     * @return the deleted record's pointer if found, otherwise null
      */
-    public KeyValuePair delete(int deleteKey) {
-        for (int i = 0; i < degree; ++i) {
-            if (kvPairs[i].getKey().getK1() == deleteKey) {
-                KeyValuePair kvToDelete = kvPairs[i];
-                Util.deleteAndShift(kvPairs, i);
-                --degree;
-                return kvToDelete;
+    public RecordPointer delete(int key) {
+        for (int i = 0; i < getDegree(); i++) {
+            if (getKeys()[i] == key) {
+            	RecordPointer pointer = pointers[i];
+            	super.deleteAndShift(i);
+                deleteAndShift(i);
+                setDegree(getDegree()-1);
+                return pointer;
             }
         }
         return null;
@@ -97,37 +108,29 @@ public class LeafNode extends Node {
      * @param index index of entry to be deleted
      * @return deleted entry
      */
-    public KeyValuePair deleteByIndex(int index) {
-        KeyValuePair toDelete = kvPairs[index];
-        Util.deleteAndShift(kvPairs, index);
-        --degree;
-        return toDelete;
+    public RecordPointer deleteByIndex(int index) {
+    	RecordPointer pointer = pointers[index];
+    	super.deleteAndShift(index);
+        deleteAndShift(index);
+        setDegree(getDegree()-1);
+        return pointer;
     }
 
     /**
      * Delete all entries in the node
      */
     public void deleteAll() {
-        Arrays.fill(kvPairs, null);
-        degree = 0;
+        Arrays.fill(pointers, null);
+        Arrays.fill(getKeys(), 0);
+        setDegree(0);
     }
 
-    @Override
-    public int getDegree() {
-        return degree;
+    public RecordPointer[] getPointers() {
+        return pointers;
     }
 
-    @Override
-    public void setDegree(int degree) {
-        this.degree = degree;
-    }
-
-    public KeyValuePair[] getKvPairs() {
-        return kvPairs;
-    }
-
-    public void setKvPairs(KeyValuePair[] kvPairs) {
-        this.kvPairs = kvPairs;
+    public void setPointers(RecordPointer[] pointers) {
+        this.pointers = pointers;
     }
 
     public LeafNode getRightSibling() {
@@ -138,32 +141,15 @@ public class LeafNode extends Node {
         this.rightSibling = rightSibling;
     }
 
-    public LeafNode getLeftSibling() {
-        return leftSibling;
-    }
-
-    public void setLeftSibling(LeafNode leftSibling) {
-        this.leftSibling = leftSibling;
-    }
-
-    public InternalNode getParent() {
-        return parent;
-    }
-
-    public void setParent(InternalNode parent) {
-        this.parent = parent;
-    }
-
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < degree; ++i) {
-            sb.append("(");
-            sb.append(kvPairs[i].getKey().getK1());
+        sb.append("[");
+        for (int i = 0; i < getDegree(); i++) {
+            sb.append(getKeys()[i]);
             sb.append(", ");
-            sb.append(String.valueOf(kvPairs[i].getKey().getK2()).trim());
-            sb.append(")  ");
         }
+        sb.replace(sb.length()-2, sb.length()-1, "]");
         return sb.toString();
     }
 }
