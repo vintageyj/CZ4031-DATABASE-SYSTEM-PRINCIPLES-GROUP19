@@ -4,7 +4,7 @@ import java.util.Arrays;
  * Class representing a leaf node in a B+ tree
  * Implements Node interface
  */
-public class LeafNode implements Node {
+public class LeafNode extends Node {
 
     /**
      * Current number of entries in the node

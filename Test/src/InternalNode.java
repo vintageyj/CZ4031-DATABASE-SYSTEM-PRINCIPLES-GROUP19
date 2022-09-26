@@ -4,7 +4,7 @@ import java.util.Arrays;
  * Class representing internal node (non-leaf node) in a B+ tree
  * Implements Node interface
  */
-public class InternalNode implements Node {
+public class InternalNode extends Node {
 
     /**
      * Current number of pointers to child node

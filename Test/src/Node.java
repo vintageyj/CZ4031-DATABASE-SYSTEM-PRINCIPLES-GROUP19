@@ -1,15 +1,15 @@
 /**
  * Interface representing a node in a B+ tree
  */
-public interface Node {
+public abstract class Node {
 
-    int getDegree();
+    abstract int getDegree();
 
-    void setDegree(int degree);
+    abstract void setDegree(int degree);
 
-    InternalNode getParent();
+    abstract InternalNode getParent();
 
-    void setParent(InternalNode parent);
+    abstract void setParent(InternalNode parent);
 
-    String toString();
+    public abstract String toString();
 }
