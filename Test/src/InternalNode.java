@@ -2,7 +2,7 @@ import java.util.Arrays;
 
 /**
  * Class representing internal node (non-leaf node) in a B+ tree
- * Implements Node interface
+ * Extends Node abstract class
  */
 public class InternalNode extends Node {
 
@@ -15,43 +15,68 @@ public class InternalNode extends Node {
      * Construct an empty internal node specified with maximum number of keys
      * @param n maximum number of keys in a node
      */
-    public InternalNode(int n) {
-        this(0, new Key[n], new Node[n+1], null);
+    public InternalNode(boolean isRoot) {
+        this(0, isRoot, new int[getN()], new Node[getN()+1], null);
     }
 
     /**
      * Construct an internal node with current degree, array of keys and pointers
      * @param degree current degree of node
+     * @param isRoot whether the node is a root node
      * @param keys array of keys
      * @param pointers array of pointers
      */
-    public InternalNode(int degree, Key[] keys, Node[] pointers) {
-        this(degree, keys, pointers, null);
+    public InternalNode(int degree, boolean isRoot, int[] keys, Node[] pointers) {
+        this(degree, isRoot, keys, pointers, null);
     }
 
     /**
      * Construct an internal node with current degree, array of keys and pointers, and parent node
      * @param degree current degree of node
+     * @param isRoot whether the node is a root node
      * @param keys array of keys
      * @param pointers array of pointers
      * @param parent parent node
      */
-    public InternalNode(int degree, Key[] keys, Node[] pointers, InternalNode parent) {
-        this.degree = degree;
-        this.keys = keys;
+    public InternalNode(int degree, boolean isRoot, int[] keys, Node[] pointers, InternalNode parent) {
+    	super(0, degree, isRoot, keys, parent);
         this.pointers = pointers;
-        this.parent = parent;
     }
 
     /**
-     * Insert a key-node pair to the node while keeping the key and pointer arrays sorted
-     * @param knPair key and node to be inserted
+     * Insert a node pointer to a specific index in the array of pointers, shift the pointers affected by the insertion
+     * and delete last pointer in the array
+     * @param pointer node pointer to be inserted
+     * @param pos index to insert
      */
-    public void addSorted(KeyNodePair knPair) {
-        int index = Util.findIndexToInsert(keys, knPair.getKey());
-        Util.insertAndShift(keys, knPair.getKey(), index);
-        Util.insertAndShift(pointers, knPair.getNode(), index+1);
-        ++degree;
+    public void insertAndShift(Node pointer, int pos) {
+        for (int i = pointers.length - 1; i > pos; i--) {
+        	pointers[i] = pointers[i-1];
+        }
+        pointers[pos] = pointer;
+    }
+
+    /**
+     * Delete a node pointer on the specified index in the array of pointers, then shift the pointers accordingly
+     * @param pos position of pointer to be deleted
+     */
+    public void deleteAndShift(int pos) {
+        for (int i = pos; i < pointers.length - 1; ++i) {
+        	pointers[i] = pointers[i+1];
+        }
+        pointers[pointers.length - 1] = null;
+    }
+
+    /**
+     * Insert a key and node pointer to the node while keeping the key and pointer arrays sorted
+     * @param key key to be inserted
+     * @param pointer node pointer to be inserted
+     */
+    public void addSorted(int key, Node pointer) {
+        int index = findIndexToInsert(key);
+        insertAndShift(key, index);
+        insertAndShift(pointer, index+1);
+        setDegree(getDegree()+1);
     }
 
     /**
@@ -59,8 +84,8 @@ public class InternalNode extends Node {
      * @param key key to be added
      * @param pos position to add the key
      */
-    public void addKey(Key key, int pos) {
-        Util.insertAndShift(keys, key, pos);
+    public void addKey(int key, int pos) {
+        insertAndShift(key, pos);
     }
 
     /**
@@ -69,8 +94,8 @@ public class InternalNode extends Node {
      * @param pos position to add the pointer
      */
     public void addPointer(Node pointer, int pos) {
-        Util.insertAndShift(pointers, pointer, pos);
-        ++degree;
+        insertAndShift(pointer, pos);
+        setDegree(getDegree()+1);
     }
 
     /**
@@ -78,9 +103,9 @@ public class InternalNode extends Node {
      * @param pos position of key to be deleted
      * @return deleted key
      */
-    public Key deleteKey(int pos) {
-        Key key = keys[pos];
-        Util.deleteAndShift(keys, pos);
+    public int deleteKey(int pos) {
+        int key = getKeys()[pos];
+        super.deleteAndShift(pos);
         return key;
     }
 
@@ -91,8 +116,8 @@ public class InternalNode extends Node {
      */
     public Node deletePointer(int pos) {
         Node pointer = pointers[pos];
-        Util.deleteAndShift(pointers, pos);
-        --degree;
+        deleteAndShift(pos);
+        setDegree(getDegree()-1);
         return pointer;
     }
 
@@ -100,17 +125,9 @@ public class InternalNode extends Node {
      * Delete all keys and pointers in the node
      */
     public void deleteAll() {
-        Arrays.fill(keys, null);
         Arrays.fill(pointers, null);
-        degree = 0;
-    }
-
-    public Key[] getKeys() {
-        return keys;
-    }
-
-    public void setKeys(Key[] keys) {
-        this.keys = keys;
+        Arrays.fill(getKeys(), 0);
+        setDegree(0);
     }
 
     public Node[] getPointers() {
@@ -121,25 +138,15 @@ public class InternalNode extends Node {
         this.pointers = pointers;
     }
 
-    public InternalNode getParent() {
-        return parent;
-    }
-
-    public void setParent(InternalNode parent) {
-        this.parent = parent;
-    }
-
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        for (Key k : keys) {
-            if (k == null) break;
-            sb.append("(");
-            sb.append(k.getK1());
+        sb.append("[");
+        for (int i = 0; i < getDegree(); i++) {
+            sb.append(getKeys()[i]);
             sb.append(", ");
-            sb.append(String.valueOf(k.getK2()).trim());
-            sb.append(")  ");
         }
+        sb.replace(sb.length()-2, sb.length()-1, "]");
         return sb.toString();
     }
 }

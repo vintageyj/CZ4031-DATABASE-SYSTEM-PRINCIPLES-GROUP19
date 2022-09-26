@@ -2,7 +2,7 @@ import java.util.Arrays;
 
 /**
  * Class representing a leaf node in a B+ tree
- * Implements Node interface
+ * Extends Node abstract class
  */
 public class LeafNode extends Node {
     
@@ -26,22 +26,24 @@ public class LeafNode extends Node {
 
     /**
      * 
-     * Construct a leaf node with current degree and array of key-value pairs
+     * Construct a leaf node with current degree and array of keys and array of record pointers
      * @param degree current degree of node
      * @param isRoot whether the node is a root node
      * @param keys array of keys
-     * @param recordPointers array of pointers to records
+     * @param pointers array of pointers to records
      */
-    public LeafNode(int degree, boolean isRoot, int[] keys, RecordPointer[] recordPointers) {
-        this(degree, isRoot, keys, recordPointers, null, null);
+    public LeafNode(int degree, boolean isRoot, int[] keys, RecordPointer[] pointers) {
+        this(degree, isRoot, keys, pointers, null, null);
     }
 
     /**
+     * 
      * Construct a leaf node with all attributes
      * @param degree current degree of node
-     * @param kvPairs array representing key-value pairs of the node
+     * @param isRoot whether the node is a root node
+     * @param keys array of keys
+     * @param pointers array of pointers to records
      * @param parent parent node
-     * @param leftSibling left sibling node
      * @param rightSibling right sibling node
      */
     public LeafNode(int degree, boolean isRoot, int[] keys, RecordPointer[] pointers, InternalNode parent, LeafNode rightSibling) {
@@ -75,8 +77,9 @@ public class LeafNode extends Node {
     }
 
     /**
-     * Insert entry to leaf node while keeping the key-value pairs sorted
-     * @param entry key-value pair to be inserted
+     * Insert entry to leaf node while keeping the keys and record pointers sorted
+     * @param key key to be inserted
+     * @param pointer record pointer to be inserted
      */
     public void addSorted(int key, RecordPointer pointer) {
         int index = findIndexToInsert(key);
