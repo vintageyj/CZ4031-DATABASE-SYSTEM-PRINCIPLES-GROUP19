@@ -8,51 +8,54 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Storage {
+    private final int MEMORY_SIZE;
     private final int BLOCK_SIZE;
     private final int RECORD_SIZE;
     private final int NUM_OF_RECORD;
-    private final int MEMORY_SIZE;
 
     private byte[] blocks ;
     private int blockTailIdx;
-    private LinkedList<RecordPointer> emptyRecord;
+    private LinkedList<RecordPointer> buffer; // changed emptyRecord to buffer? Buffer to store the list of available spaces to be populated by KeyPointers
 
-    private BPlusTree bpt;
+    private BPlusTree bPlusTree;
     private AccessLogger accLog;
 
 
     public Storage(int blockSize, int recordSize, int memorySize) {
+        MEMORY_SIZE = memorySize;
         BLOCK_SIZE = blockSize;
         RECORD_SIZE = recordSize;
         NUM_OF_RECORD = BLOCK_SIZE / RECORD_SIZE;
-        MEMORY_SIZE = memorySize;
 
         blocks = new byte[MEMORY_SIZE];
         blockTailIdx = -1;
-        emptyRecord = new LinkedList<>();
+        buffer = new LinkedList<>();
         accLog = new AccessLogger(this);
     }
 
+    // Initialise the storage with the given input file in .tsv format
     public void initWithTSV(String path) {
         try {
+            // Reads the file line by line
             Reader in = new FileReader(path);
             BufferedReader buf = new BufferedReader(in);
             String line = buf.readLine();
             line = buf.readLine();
             try {
                 while (line != null) {
+                    // Split and parse the data in each line to create a new record
                     String[] lineItems = line.split("\\s"); //splitting the line and adding its items in String[]
                     createRecord(lineItems[0], Float.parseFloat(lineItems[1]), Integer.parseInt(lineItems[2]));
                     line = buf.readLine();
                 } buf.close();
             } catch(Exception e) {
-            	System.out.println("Something went wrong"+e.getMessage());
+                System.out.println("Something went wrong. " + e.getMessage());
             }
         } catch (FileNotFoundException e) {
-            System.out.println("Wrong file path");
+            System.out.println("Wrong file path. " + e.getMessage());
             e.printStackTrace();
         } catch (IOException e) {
-            System.out.println("Error while reading file");
+            System.out.println("Error while reading file. "  + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -61,13 +64,15 @@ public class Storage {
      * Build B+ tree on database by inserting the records from database sequentially
      */
     public void buildIndex() {
-        bpt = new BPlusTree(Util.getNFromBlockSize(BLOCK_SIZE), this);
+        bPlusTree = new BPlusTree(Util.getNFromBlockSize(BLOCK_SIZE), this);
+        // Iterates through data blocks
         for (int blockID = 0; blockID <= blockTailIdx; ++blockID) {
             Block block = Block.fromByteArray(readBlock(blockID), RECORD_SIZE);
+            // Iterates through all record spaces since non-clustered index is used
             for (int recordID = 0; recordID < NUM_OF_RECORD; ++recordID) {
                 Record record = block.readRecord(recordID);
                 if (!record.isEmpty()) {
-                    bpt.insert(record, new RecordPointer(blockID, recordID));
+                    bPlusTree.insert(record, new RecordPointer(blockID, recordID));
                 }
             }
         }
@@ -80,11 +85,15 @@ public class Storage {
      * @param numVotes data for the record
      */
     public RecordPointer createRecord(String tConst, float rating, int numVotes) {
-        if(emptyRecord.isEmpty()) createBlock();
+        // If the linked list buffer storing the next available KeyPointer addresses is empty, then initialise the linked list buffer
+        if(buffer.isEmpty()) {
+        	createBlock();
+        }
+        
+        // Retrieves the next available space from the buffer
+        RecordPointer address = buffer.remove();
 
-        RecordPointer address = emptyRecord.element();
-        emptyRecord.remove();
-
+        // Retrieve the block storing the next available space
         Block block = Block.fromByteArray(readBlock(address.getBlockID()), RECORD_SIZE);
         block.updateRecord(address.getRecordID(), tConst, rating, numVotes);
         updateBlock(address.getBlockID(), block.toByteArray());
@@ -97,8 +106,11 @@ public class Storage {
      * @param address address of record to get
      */
     public Record readRecord(RecordPointer address) {
+        // Reading a record incurs an I/O access to its block
         accLog.addBlock(address);
-        return Block.fromByteArray(readBlock(address.getBlockID()), RECORD_SIZE).readRecord(address.getRecordID());
+        Block block = Block.fromByteArray(readBlock(address.getBlockID()), RECORD_SIZE);
+        Record record = block.readRecord(address.getRecordID());
+        return record;
     }
 
     /**
@@ -110,7 +122,7 @@ public class Storage {
         block.deleteRecord(address.getRecordID());
         updateBlock(address.getBlockID(), block.toByteArray());
 
-        emptyRecord.add(address);
+        buffer.add(address);
     }
 
     /**
@@ -121,7 +133,7 @@ public class Storage {
         Block block = Block.empty(BLOCK_SIZE, RECORD_SIZE);
         updateBlock(blockTailIdx, block.toByteArray());
         for(int recordID = 0; recordID < NUM_OF_RECORD ; ++recordID) {
-            emptyRecord.add(new RecordPointer(blockTailIdx, recordID));
+            buffer.add(new RecordPointer(blockTailIdx, recordID));
         }
     }
 
@@ -139,12 +151,15 @@ public class Storage {
      * @param blockID ID of the block to get
      * @return a block with given ID
      */
+    // Retrieves the block from disk using block <<blockID>>'s base + offset address
     public byte[] readBlock(int blockID) {
-        return Arrays.copyOfRange(blocks, blockID * BLOCK_SIZE, blockID * BLOCK_SIZE + BLOCK_SIZE);
+        int baseAddress = blockID * BLOCK_SIZE;
+        int offset = baseAddress + BLOCK_SIZE;
+        return Arrays.copyOfRange(blocks, baseAddress, offset);
     }
 
     public BPlusTree getBPT() {
-        return bpt;
+        return bPlusTree;
     }
 
     /**
@@ -153,9 +168,9 @@ public class Storage {
      * @return list of records matching the key value
      */
     public List<Record> searchBPT(int searchKey) {
-        List<RecordPointer> recordAddresses=  bpt.search(searchKey);
+        List<RecordPointer> recordPointers = bPlusTree.search(searchKey);
         List<Record> records = new LinkedList<>();
-        for(RecordPointer ra : recordAddresses) {
+        for(RecordPointer ra : recordPointers) {
             records.add(readRecord(ra));
         }
         return records;
@@ -168,9 +183,9 @@ public class Storage {
      * @return list of records having the key value within the lower and upper bounds
      */
     public List<Record> searchBPT(int lower, int upper) {
-        List<RecordPointer> recordAddresses=  bpt.search(lower, upper);
+        List<RecordPointer> recordPointers=  bPlusTree.search(lower, upper);
         List<Record> records = new LinkedList<>();
-        for(RecordPointer ra : recordAddresses) {
+        for(RecordPointer ra : recordPointers) {
             records.add(readRecord(ra));
         }
         return records;
@@ -181,7 +196,7 @@ public class Storage {
      * @param deleteKey
      */
     public void deleteBPT(int deleteKey) {
-        bpt.delete(deleteKey);
+        bPlusTree.delete(deleteKey);
     }
 
     public int getNumBlocksUsed() {
