@@ -11,14 +11,14 @@ public class KeyValuePair implements Comparable<KeyValuePair> {
     /**
      * Value (record address)
      */
-    private RecordAddress recordAddress;
+    private RecordPointer recordAddress;
 
     /**
      * Construct a key-value pair
      * @param key key
      * @param recordAddress value (record address)
      */
-    public KeyValuePair(Key key, RecordAddress recordAddress) {
+    public KeyValuePair(Key key, RecordPointer recordAddress) {
         this.key = key;
         this.recordAddress = recordAddress;
     }
@@ -31,11 +31,11 @@ public class KeyValuePair implements Comparable<KeyValuePair> {
         this.key = key;
     }
 
-    public RecordAddress getRecordAddress() {
+    public RecordPointer getRecordAddress() {
         return recordAddress;
     }
 
-    public void setRecordAddress(RecordAddress recordAddress) {
+    public void setRecordAddress(RecordPointer recordAddress) {
         this.recordAddress = recordAddress;
     }
 

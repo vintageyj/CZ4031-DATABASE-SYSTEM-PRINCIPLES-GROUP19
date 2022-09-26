@@ -1,7 +1,7 @@
 /**
  * Class representing the logical address of a record
  */
-public class RecordAddress {
+public class RecordPointer {
 
     /**
      * Id of block
@@ -18,7 +18,7 @@ public class RecordAddress {
      * @param blockID block id
      * @param recordID record id
      */
-    public RecordAddress(int blockID, int recordID) {
+    public RecordPointer(int blockID, int recordID) {
         this.blockID = blockID;
         this.recordID = recordID;
     }

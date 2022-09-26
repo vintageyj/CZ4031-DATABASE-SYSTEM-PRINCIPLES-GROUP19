@@ -3,7 +3,7 @@ import java.util.List;
 
 public class AccessLogger {
     private List<Node> nodeList;
-    private List<RecordAddress> blockList;
+    private List<RecordPointer> blockList;
 
     private int numNodeAccess;
     private int numBlockAccess;
@@ -30,7 +30,7 @@ public class AccessLogger {
         if (nodeList.size() < 5) nodeList.add(node);
     }
 
-    public void addBlock(RecordAddress ra) {
+    public void addBlock(RecordPointer ra) {
         ++numBlockAccess;
         if (blockList.size() < 5) blockList.add(ra);
     }

@@ -84,7 +84,7 @@ public class BPlusTree {
      * @param searchKey search key (numVotes)
      * @return a list of record addresses with a key value equal to the search key
      */
-    public List<RecordAddress> search(int searchKey) {
+    public List<RecordPointer> search(int searchKey) {
         // Reset logs for experiment
         st.resetLog();
 
@@ -99,7 +99,7 @@ public class BPlusTree {
      * @param upper upper bound of the search key, inclusive (numVotes)
      * @return a list of record addresses with a key value between the lower and upper bounds
      */
-    public List<RecordAddress> search(int lower, int upper) {
+    public List<RecordPointer> search(int lower, int upper) {
         // Reset logs for experiment
         st.resetLog();
 
@@ -113,8 +113,8 @@ public class BPlusTree {
      * @param upper upper bound of search
      * @return a list of record addresses with a key value between the lower and upper bounds
      */
-    public List<RecordAddress> searchInternal(Node node, int lower, int upper) {
-        List<RecordAddress> result = new ArrayList<>();
+    public List<RecordPointer> searchInternal(Node node, int lower, int upper) {
+        List<RecordPointer> result = new ArrayList<>();
         if (node instanceof LeafNode) {
             LeafNode leafNode = (LeafNode) node;
             boolean finished = false;
@@ -164,7 +164,7 @@ public class BPlusTree {
      * @param record record to be inserted
      * @param address address of record to be inserted
      */
-    public void insert(Record record, RecordAddress address) {
+    public void insert(Record record, RecordPointer address) {
         Key key = new Key(record.getNumVotes(), record.getTconst());
         KeyValuePair entry = new KeyValuePair(key, address);
 

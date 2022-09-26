@@ -15,7 +15,7 @@ public class Storage {
 
     private byte[] blocks ;
     private int blockTailIdx;
-    private LinkedList<RecordAddress> emptyRecord;
+    private LinkedList<RecordPointer> emptyRecord;
 
     private BPlusTree bpt;
     private AccessLogger accLog;
@@ -67,7 +67,7 @@ public class Storage {
             for (int recordID = 0; recordID < NUM_OF_RECORD; ++recordID) {
                 Record record = block.readRecord(recordID);
                 if (!record.isEmpty()) {
-                    bpt.insert(record, new RecordAddress(blockID, recordID));
+                    bpt.insert(record, new RecordPointer(blockID, recordID));
                 }
             }
         }
@@ -79,10 +79,10 @@ public class Storage {
      * @param rating data for the record
      * @param numVotes data for the record
      */
-    public RecordAddress createRecord(String tConst, float rating, int numVotes) {
+    public RecordPointer createRecord(String tConst, float rating, int numVotes) {
         if(emptyRecord.isEmpty()) createBlock();
 
-        RecordAddress address = emptyRecord.element();
+        RecordPointer address = emptyRecord.element();
         emptyRecord.remove();
 
         Block block = Block.fromByteArray(readBlock(address.getBlockID()), RECORD_SIZE);
@@ -96,7 +96,7 @@ public class Storage {
      * Read a record given its address
      * @param address address of record to get
      */
-    public Record readRecord(RecordAddress address) {
+    public Record readRecord(RecordPointer address) {
         accLog.addBlock(address);
         return Block.fromByteArray(readBlock(address.getBlockID()), RECORD_SIZE).readRecord(address.getRecordID());
     }
@@ -105,7 +105,7 @@ public class Storage {
      * Delete a record given its address, reallocate it for reuse
      * @param address address of record to be deleted
      */
-    public void deleteRecord(RecordAddress address) {
+    public void deleteRecord(RecordPointer address) {
         Block block = Block.fromByteArray(readBlock(address.getBlockID()), RECORD_SIZE);
         block.deleteRecord(address.getRecordID());
         updateBlock(address.getBlockID(), block.toByteArray());
@@ -121,7 +121,7 @@ public class Storage {
         Block block = Block.empty(BLOCK_SIZE, RECORD_SIZE);
         updateBlock(blockTailIdx, block.toByteArray());
         for(int recordID = 0; recordID < NUM_OF_RECORD ; ++recordID) {
-            emptyRecord.add(new RecordAddress(blockTailIdx, recordID));
+            emptyRecord.add(new RecordPointer(blockTailIdx, recordID));
         }
     }
 
@@ -153,9 +153,9 @@ public class Storage {
      * @return list of records matching the key value
      */
     public List<Record> searchBPT(int searchKey) {
-        List<RecordAddress> recordAddresses=  bpt.search(searchKey);
+        List<RecordPointer> recordAddresses=  bpt.search(searchKey);
         List<Record> records = new LinkedList<>();
-        for(RecordAddress ra : recordAddresses) {
+        for(RecordPointer ra : recordAddresses) {
             records.add(readRecord(ra));
         }
         return records;
@@ -168,9 +168,9 @@ public class Storage {
      * @return list of records having the key value within the lower and upper bounds
      */
     public List<Record> searchBPT(int lower, int upper) {
-        List<RecordAddress> recordAddresses=  bpt.search(lower, upper);
+        List<RecordPointer> recordAddresses=  bpt.search(lower, upper);
         List<Record> records = new LinkedList<>();
-        for(RecordAddress ra : recordAddresses) {
+        for(RecordPointer ra : recordAddresses) {
             records.add(readRecord(ra));
         }
         return records;

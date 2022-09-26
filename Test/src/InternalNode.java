@@ -14,7 +14,7 @@ public class InternalNode extends Node {
     /**
      * Array of keys
      */
-    private Key[] keys;
+    private int[] keys;
 
     /**
      * Array of pointers to child node

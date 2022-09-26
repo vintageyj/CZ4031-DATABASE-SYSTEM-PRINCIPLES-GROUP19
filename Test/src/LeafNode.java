@@ -12,19 +12,19 @@ public class LeafNode extends Node {
     private int degree;
 
     /**
-     * Array of key-value pairs representing an entry
+     * Array of keys
      */
-    private KeyValuePair[] kvPairs;
+    private int[] keys;
+    
+    /**
+     * Array of pointers to records
+     */
+    private RecordPointer [] pointers;
 
     /**
      * Parent node
      */
     private InternalNode parent;
-
-    /**
-     * Left sibling of the leaf node
-     */
-    private LeafNode leftSibling;
 
     /**
      * Right sibling of the leaf node
@@ -35,8 +35,8 @@ public class LeafNode extends Node {
      * Construct an empty leaf node specified with maximum number of keys
      * @param n maximum number of keys in a node
      */
-    public LeafNode(int n) {
-        this(0, new KeyValuePair[n], null, null, null);
+    public LeafNode(int n, RecordPointer pointer) {
+        this(0, n, new int [n], new RecordPointer [n], null, null);
     }
 
     /**
@@ -44,9 +44,9 @@ public class LeafNode extends Node {
      * @param degree current degree of node
      * @param kvPairs array of key-value pairs
      */
-    public LeafNode(int degree, KeyValuePair[] kvPairs) {
-        this(degree, kvPairs, null, null, null);
-    }
+    /*public LeafNode(int degree, KeyValuePair[] kvPairs) {
+        this(degree, n, kvPairs, null, null, null);
+    }*/
 
     /**
      * Construct a leaf node with all attributes
@@ -56,11 +56,12 @@ public class LeafNode extends Node {
      * @param leftSibling left sibling node
      * @param rightSibling right sibling node
      */
-    public LeafNode(int degree, KeyValuePair[] kvPairs, InternalNode parent, LeafNode leftSibling, LeafNode rightSibling) {
+    public LeafNode(int degree, int n, int[] keys, RecordPointer[] pointers, InternalNode parent, LeafNode rightSibling) {
+    	super(n, 0);
         this.degree = degree;
-        this.kvPairs = kvPairs;
+        this.keys = keys;
+        this.pointers = pointers;
         this.parent = parent;
-        this.leftSibling = leftSibling;
         this.rightSibling = rightSibling;
     }
 
@@ -68,8 +69,8 @@ public class LeafNode extends Node {
      * Insert entry to leaf node while keeping the key-value pairs sorted
      * @param entry key-value pair to be inserted
      */
-    public void addSorted(KeyValuePair entry) {
-        int index = Util.findIndexToInsert(kvPairs, entry);
+    public void addSorted(int key, RecordPointer pointer) {
+        int index = Util.findIndexToInsert(keys, key);
         Util.insertAndShift(kvPairs, entry, index);
         ++degree;
     }
