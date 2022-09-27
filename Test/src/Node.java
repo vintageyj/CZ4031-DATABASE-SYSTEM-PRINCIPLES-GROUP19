@@ -132,18 +132,20 @@ public abstract class Node {
     /**
      * Insert to B+ tree with numVotes as key
      * Value of the entry is the logical address of the record (Block ID, Record ID)
+     * @param root root node of the B+ Tree
      * @param record record to be inserted
      * @param pointer address of record to be inserted
-     * @return 
+     * @return root root node of the B+ tree
      */
     public static Node insert(Node root, Record record, RecordPointer pointer) {
+    	// Create new tree if root is null
     	if(root == null) {
-    		root = createTree(record, )
+    		root = new LeafNode(true);
     	}
+    	
         int key = record.getNumVotes();
-
         // Insert by traversing the tree from the root node
-        insertInternal(root, key, pointer, 0, null);
+        root.insertInternal(key, pointer, 0, null);
         return root;
     }
 
@@ -152,27 +154,22 @@ public abstract class Node {
      * @param node current node
      * @param entry entry to be inserted
      * @param newChildEntry key-node pair which points to split child, null if child was not split
-     * @return a key-node pair if current node is split, otherwise null
+     * @return a node if current node is split, otherwise null
      */
-    public KeyNodePair insertInternal(Node node, int recordKey, RecordPointer recordPointer, int nodeKey, Node newChildEntry) {
-        if (root == null) {
-            root = new LeafNode(n);
-            node = root;
-        }
-
-        boolean split = false;
-        if (node instanceof InternalNode) {
-            InternalNode curNode = (InternalNode) node;
+    public Map<int, Node> insertInternal(int recordKey, RecordPointer recordPointer, int nodeKey, Node newChildEntry) {
+    	boolean split = false;
+        if (this instanceof InternalNode) {
+            InternalNode curNode = (InternalNode) this;
 
             // Find index of pointer to leftmost node that can be inserted with the entry
-            int pointerIndex = findIndexOfNode(curNode, entry.getKey());
+            int child = curNode.findIndexOfNode(recordKey);
 
             // Insert entry to subtree
-            newChildEntry = insertInternal(curNode.getPointers()[pointerIndex], entry, newChildEntry);
+            newChildEntry = curNode.getPointers()[child].insertInternal(recordKey, recordPointer, nodeKey, newChildEntry);
 
             if (newChildEntry != null) {
-                newChildEntry.getNode().setParent(curNode);
-                if (curNode.getDegree() < maxDegreeInternal) {
+                newChildEntry.setParent(curNode);
+                if (curNode.getDegree() < getN()+1) {
                     // Insert entry to node if it is not full
                     curNode.addSorted(newChildEntry);
                     newChildEntry = null;
