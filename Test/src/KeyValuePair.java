@@ -1,5 +1,5 @@
 /**
- * Class representing key-value pair in the leaf node of a B+ tree
+ * DEPRECATED Class representing key-value pair in the leaf node of a B+ tree
  */
 public class KeyValuePair implements Comparable<KeyValuePair> {
 

@@ -1,5 +1,5 @@
 /**
- * Class representing a pair of key and pointer to node
+ * DEPRECATED Class representing a pair of key and pointer to node
  */
 public class KeyNodePair implements Comparable<KeyNodePair> {
 

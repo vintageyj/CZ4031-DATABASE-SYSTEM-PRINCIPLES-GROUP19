@@ -54,6 +54,7 @@ public class Util {
         arr[arr.length - 1] = null;
     }
 
+    //TODO: Shift method to other class so util can be deprecated
     /**
      * Get n parameter of B+ tree from block size
      * @param blockSize size of block in bytes
