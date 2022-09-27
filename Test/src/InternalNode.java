@@ -43,6 +43,22 @@ public class InternalNode extends Node {
         this.pointers = pointers;
     }
 
+    //TODO: Helper functions
+    /**
+     * Find index of child node based on key value provided
+     * @param node parent node
+     * @param key value of key
+     * @return index of child node
+     */
+    public int findIndexOfNode(int key) {
+    	for (int i = 0; i < getKeys().length; i++) {
+    		if (key < getKeys()[i]) {
+    			return i;
+    		}
+    	}
+        return getKeys().length;
+    }
+
     /**
      * Insert a node pointer to a specific index in the array of pointers, shift the pointers affected by the insertion
      * and delete last pointer in the array
