@@ -7,6 +7,10 @@ import java.util.List;
  */
 public abstract class Node {
 	/**
+	 * Storage for logging purposes
+	 */
+	private static Storage storage;
+	/**
 	 * Maximum number of keys that can be held
 	 */
 	private static int n;
@@ -147,7 +151,7 @@ public abstract class Node {
     	
         int key = record.getNumVotes();
         // Insert by traversing the tree from the root node
-        KeyNode newRoot = root.insertInternal(key, pointer, null);
+        KeyNode newRoot = root.insertInternal(key, pointer);
         return newRoot.getNode();
     }
 
@@ -158,7 +162,8 @@ public abstract class Node {
      * @param splitChild key-node pair which points to split child, null if child was not split
      * @return a KeyNode of either the new root or the split child if current node was split, otherwise null
      */
-    public KeyNode insertInternal(int key, RecordPointer pointer, KeyNode splitChild) {
+    public KeyNode insertInternal(int key, RecordPointer pointer) {
+    	KeyNode splitChild = null;
     	boolean split = false;
         if (this instanceof InternalNode) {
             InternalNode curNode = (InternalNode) this;
@@ -167,22 +172,23 @@ public abstract class Node {
             int child = curNode.findIndexOfNode(key);
 
             // Insert entry to subtree
-            splitChild = curNode.getPointers()[child].insertInternal(key, pointer, splitChild);
+            splitChild = curNode.getPointers()[child].insertInternal(key, pointer);
 
             if (splitChild != null) {
             	splitChild.getNode().setParent(curNode);
                 if (curNode.getDegree() < getN()+1) {
                     // Insert entry to node if it is not full
                     curNode.addSorted(splitChild.getKey(), splitChild.getNode());
-                    //TODO: figure out if this is necessary or redundant
-                    splitChild = null;
+                    // No nodes were split after insertion
+                    return null;
                 } else {
                     // Split node if it is full
-                	splitChild = splitNode(curNode, splitChild);
+                	splitChild = curNode.splitNode(splitChild);
                     split = true;
 
+                    //TODO: Confirm that this can be tracked by degree; add recursive function to get this
                     // Increase number of nodes
-                    ++totalNodes;
+                    //++totalNodes;
                 }
             }
         } else if (this instanceof LeafNode) {
@@ -190,16 +196,16 @@ public abstract class Node {
             if (leafNode.getDegree() < getN()) {
                 // Add entry to leaf node if it is not full
                 leafNode.addSorted(key, pointer);
-                //TODO: figure out if this is necessary or redundant
-                splitChild = null;
+                // No nodes were split after insertion
+                return null;
             } else {
                 // Split leaf if it is full
-                splitChild = splitLeaf(leafNode, key, pointer);
+                splitChild = leafNode.splitLeaf(key, pointer);
                 split = true;
 
                 //TODO: Confirm that this can be tracked by degree; add recursive function to get this
                 // Increase number of nodes
-                ++totalNodes;
+                //++totalNodes;
             }
         }
 
@@ -208,115 +214,22 @@ public abstract class Node {
             InternalNode newNode = new InternalNode(true);
             newNode.addPointer(this, newNode.getDegree());
             newNode.addSorted(splitChild.getKey(), splitChild.getNode());
-            this.setParent(newNode);
+            setParent(newNode);
             splitChild.getNode().setParent(newNode);
             //TODO: finish debugging and delete this
-            if(this.getHeight() != splitChild.getNode().getHeight()) {
+            if(getHeight() != splitChild.getNode().getHeight()) {
             	System.out.println("Height tracking fked up somewhere");
             }
-            newNode.setHeight(this.getHeight()+1);
+            newNode.setHeight(getHeight()+1);
 
             //TODO: Confirm that this can be tracked by degree; add recursive function to get this
             // Increase number of nodes
-            ++totalNodes;
+            //++totalNodes;
             return new KeyNode(0, newNode);
         }
         return splitChild;
     }
 
-    //TODO: REFACTOR
-    /**
-     * Split full internal node into two parts
-     * @param node internal node to be split
-     * @param knPair key and pointer to be added
-     * @return pair of the smallest key in second node and pointer to second node
-     */
-    public KeyNodePair splitNode(InternalNode node, KeyNodePair knPair) {
-        Key[] keys = node.getKeys();
-        Node[] pointers = node.getPointers();
-
-        // Create temporary array to store existing and to be added keys and pointers
-        Key[] tempKeys = Arrays.copyOf(keys, keys.length+1);
-        Node[] tempPointers = Arrays.copyOf(pointers, pointers.length+1);
-
-        // Find midpoint to split node
-        int mid = (int) Math.floor((n+1)/2.0);
-
-        // Find on which index the key and pointer can be inserted in order to keep it sorted
-        int indexToInsertKey = Util.findIndexToInsert(tempKeys, knPair.getKey());
-
-        // Insert key and pointer to temporary array
-        Util.insertAndShift(tempKeys, knPair.getKey(), indexToInsertKey);
-        Util.insertAndShift(tempPointers, knPair.getNode(), indexToInsertKey+1);
-
-        // Split key and pointer arrays in half
-        Key[] firstHalfKeys = Arrays.copyOfRange(tempKeys, 0, mid);
-        Node[] firstHalfPointers = Arrays.copyOfRange(tempPointers, 0, mid+1);
-        Key[] secondHalfKeys = Arrays.copyOfRange(tempKeys, mid+1, tempKeys.length);
-        Node[] secondHalfPointers = Arrays.copyOfRange(tempPointers, mid+1, tempPointers.length);
-
-        // Set keys and pointers to nodes
-        node.setKeys(Arrays.copyOf(firstHalfKeys, keys.length));
-        node.setPointers(Arrays.copyOf(firstHalfPointers, pointers.length));
-        node.setDegree(firstHalfPointers.length);
-
-        // Create a new node to store the split keys and pointers
-        InternalNode newNode = new InternalNode(secondHalfPointers.length, Arrays.copyOf(secondHalfKeys, keys.length),
-                Arrays.copyOf(secondHalfPointers, pointers.length));
-
-        // Set the new node as parent of moved nodes
-        for (int i = 0; i < newNode.getDegree(); ++i) {
-            newNode.getPointers()[i].setParent(newNode);
-        }
-
-        // Return pair of the smallest key in second node and pointer to second node
-        return new KeyNodePair(tempKeys[mid], newNode);
-    }
-
-    //TODO: REFACTOR
-    /**
-     * Split full leaf node into two parts
-     * @param node leaf node to be split
-     * @param entry entry to be added
-     * @return pair of the smallest key in second node and pointer to second node
-     */
-    public KeyNodePair splitLeaf(LeafNode node, KeyValuePair entry) {
-        KeyValuePair[] kvPairs = node.getKvPairs();
-
-        // Create a temporary array to store the existing and to be added entry
-        KeyValuePair[] temp = Arrays.copyOf(kvPairs, kvPairs.length+1);
-
-        // Find midpoint to split node
-        int mid = (int) Math.ceil((n+1)/2.0);
-
-        // Find on which index the entry can be inserted to kvPairs in order to keep it sorted
-        int indexToInsert = Util.findIndexToInsert(temp, entry);
-
-        // Insert key-value pair
-        Util.insertAndShift(temp, entry, indexToInsert);
-
-        // Split key-value pair array into half
-        KeyValuePair[] firstHalf = Arrays.copyOfRange(temp, 0, mid);
-        KeyValuePair[] secondHalf = Arrays.copyOfRange(temp, mid, temp.length);
-
-        // Set key-value pairs to nodes
-        node.setKvPairs(Arrays.copyOf(firstHalf, kvPairs.length));
-        node.setDegree(firstHalf.length);
-
-        // Create a new node to store the split key-value pairs
-        LeafNode newLeaf = new LeafNode(secondHalf.length, Arrays.copyOf(secondHalf, kvPairs.length));
-
-        // Modify sibling relations on leaf nodes
-        LeafNode rightSibling = node.getRightSibling();
-        node.setRightSibling(newLeaf);
-        newLeaf.setRightSibling(rightSibling);
-        newLeaf.setLeftSibling(node);
-        if (rightSibling != null) rightSibling.setLeftSibling(newLeaf);
-
-        // Return pair of the smallest key in second node and pointer to second node
-        return new KeyNodePair(newLeaf.getKvPairs()[0].getKey(), newLeaf);
-    }
-    
 	//TODO: helper functions (mostly done)
 
     //TODO: Rename to findIndexInParent
@@ -394,6 +307,14 @@ public abstract class Node {
     		total += getTotalNodes(root1.getPointers()[i]);
     	}
     	return total+1;
+    }
+
+    public static Storage getStorage() {
+    	return Node.storage;
+    }
+
+    public static void setStorage(Storage storage) {
+    	Node.storage = storage;
     }
 
 	public static int getN() {

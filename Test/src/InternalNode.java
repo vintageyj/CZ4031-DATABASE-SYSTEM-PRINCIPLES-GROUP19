@@ -12,7 +12,7 @@ public class InternalNode extends Node {
     private Node[] pointers;
 
     /**
-     * Construct an empty internal node specified with maximum number of keys
+     * Construct an empty internal node specified with whether it is a root node
      * @param isRoot whether the node is a root node
      */
     public InternalNode(boolean isRoot) {
@@ -20,7 +20,7 @@ public class InternalNode extends Node {
     }
 
     /**
-     * Construct an internal node with current degree, array of keys and pointers
+     * Construct an internal node with current degree, whether it is a root node, array of keys and pointers
      * @param degree current degree of node
      * @param isRoot whether the node is a root node
      * @param keys array of keys
@@ -31,7 +31,7 @@ public class InternalNode extends Node {
     }
 
     /**
-     * Construct an internal node with current degree, array of keys and pointers, and parent node
+     * Construct an internal node with current degree, whether it is a root node, array of keys and pointers, and parent node
      * @param degree current degree of node
      * @param isRoot whether the node is a root node
      * @param keys array of keys
@@ -41,6 +41,57 @@ public class InternalNode extends Node {
     public InternalNode(int degree, boolean isRoot, int[] keys, Node[] pointers, InternalNode parent) {
     	super(0, degree, isRoot, keys, parent);
         this.pointers = pointers;
+    }
+
+    /**
+     * Split full internal node into two parts
+     * @param newKeyPointer key and pointer to be added
+     * @return the smallest key in the split off node and pointer to that node
+     */
+    public KeyNode splitNode(KeyNode newKeyPointer) {
+        int[] keys = getKeys();
+        Node[] pointers = getPointers();
+
+        // Temporarily update arrays to store existing and to be added keys and pointers
+        setKeys(Arrays.copyOf(keys, keys.length+1));
+        setPointers(Arrays.copyOf(pointers, pointers.length+1));
+
+        // Find midpoint to split node, with first half having the extra pointer if relevant
+        int mid = (int) Math.ceil(getN()/2.0);
+
+        // Find on which index the key and pointer can be inserted in order to keep it sorted
+        int indexToInsertKey = findIndexToInsert(newKeyPointer.getKey());
+
+        // Insert key and pointer to temporary arrays
+        insertAndShift(newKeyPointer.getKey(), indexToInsertKey);
+        insertAndShift(newKeyPointer.getNode(), indexToInsertKey+1);
+
+        // Split key and pointer arrays in half
+        int[] firstHalfKeys = Arrays.copyOfRange(getKeys(), 0, mid);
+        Node[] firstHalfPointers = Arrays.copyOfRange(getPointers(), 0, mid+1);
+        int[] secondHalfKeys = Arrays.copyOfRange(getKeys(), mid+1, getKeys().length);
+        Node[] secondHalfPointers = Arrays.copyOfRange(getPointers(), mid+1, getPointers().length);
+
+        // Set keys and pointers to nodes
+        setKeys(Arrays.copyOf(firstHalfKeys, keys.length));
+        setPointers(Arrays.copyOf(firstHalfPointers, pointers.length));
+        setDegree(firstHalfPointers.length);
+
+        // Create a new node to store the split keys and pointers
+        InternalNode newNode = new InternalNode(secondHalfPointers.length, false, Arrays.copyOf(secondHalfKeys, keys.length),
+        		Arrays.copyOf(secondHalfPointers, pointers.length));
+
+        //TODO: Debug and delete this
+        if(newNode.getDegree() < Math.floor(getN()/2.0)) {
+        	System.out.println("internal node splitting fked up!!!");
+        }
+        // Set the new node as parent of moved nodes
+        for (int i = 0; i < newNode.getDegree(); i++) {
+            newNode.getPointers()[i].setParent(newNode);
+        }
+
+        // Return pair of the smallest key in second node and pointer to second node
+        return new KeyNode(keys[mid], newNode);
     }
 
     //TODO: Helper functions

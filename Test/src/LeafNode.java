@@ -17,7 +17,7 @@ public class LeafNode extends Node {
     private LeafNode rightSibling;
 
     /**
-     * Construct an empty leaf node specified with maximum number of keys
+     * Construct an empty leaf node specified with whether it is a root node
      * @param isRoot whether the node is a root node
      */
     public LeafNode(boolean isRoot) {
@@ -26,7 +26,7 @@ public class LeafNode extends Node {
 
     /**
      * 
-     * Construct a leaf node with current degree and array of keys and array of record pointers
+     * Construct a leaf node with current degree, whether it is a root node, array of keys and record pointers
      * @param degree current degree of node
      * @param isRoot whether the node is a root node
      * @param keys array of keys
@@ -50,6 +50,54 @@ public class LeafNode extends Node {
     	super(0, degree, isRoot, keys, parent);
         this.pointers = pointers;
         this.rightSibling = rightSibling;
+    }
+
+    /**
+     * Split full leaf node into two parts
+     * @param node leaf node to be split
+     * @param entry entry to be added
+     * @return pair of the smallest key in second node and pointer to second node
+     */
+    public KeyNode splitLeaf(int key, RecordPointer entry) {
+        int[] keys = getKeys();
+        RecordPointer[] pointers = getPointers();
+
+        // Temporarily update arrays to store the existing and to be added entry
+        setKeys(Arrays.copyOf(keys, keys.length+1));
+        setPointers(Arrays.copyOf(pointers, pointers.length+1));
+
+        // Find midpoint to split node
+        int mid = (int) Math.ceil((getN()+1)/2.0);
+
+        // Find on which index the key and pointer can be inserted to arrays in order to keep it sorted
+        int indexToInsert = findIndexToInsert(key);
+
+        // Insert key and pointer
+        insertAndShift(key, indexToInsert);
+        insertAndShift(entry, indexToInsert);
+
+        // Split key and pointer arrays into half
+        int[] firstHalfKeys = Arrays.copyOfRange(getKeys(), 0, mid);
+        RecordPointer[] firstHalfPointers = Arrays.copyOfRange(getPointers(), 0, mid);
+        int[] secondHalfKeys = Arrays.copyOfRange(getKeys(), mid, getKeys().length);
+        RecordPointer[] secondHalfPointers = Arrays.copyOfRange(getPointers(), mid, getPointers().length);
+
+        // Set key-value pairs to nodes
+        setKeys(Arrays.copyOf(firstHalfKeys, keys.length));
+        setPointers(Arrays.copyOf(firstHalfPointers, pointers.length));
+        setDegree(firstHalfPointers.length);
+
+        // Create a new node to store the split key-value pairs
+        LeafNode newLeaf = new LeafNode(secondHalfPointers.length, false, Arrays.copyOf(secondHalfKeys, keys.length),
+        		Arrays.copyOf(secondHalfPointers, pointers.length));
+
+        // Modify sibling relations on leaf nodes
+        LeafNode rightSibling = getRightSibling();
+        setRightSibling(newLeaf);
+        newLeaf.setRightSibling(rightSibling);
+
+        // Return pair of the smallest key in second node and pointer to second node
+        return new KeyNode(newLeaf.getKeys()[0], newLeaf);
     }
 
     /**
