@@ -13,7 +13,7 @@ public class InternalNode extends Node {
 
     /**
      * Construct an empty internal node specified with maximum number of keys
-     * @param n maximum number of keys in a node
+     * @param isRoot whether the node is a root node
      */
     public InternalNode(boolean isRoot) {
         this(0, isRoot, new int[getN()], new Node[getN()+1], null);
@@ -46,7 +46,6 @@ public class InternalNode extends Node {
     //TODO: Helper functions
     /**
      * Find index of child node based on key value provided
-     * @param node parent node
      * @param key value of key
      * @return index of child node
      */

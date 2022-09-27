@@ -30,7 +30,7 @@ public abstract class Node {
 	 */
 	private InternalNode parent;
 	
-	//TODO: Complete method
+	//TODO: Complete method (may outright delete, looking likely atm)
 	/**
 	 * Constructs a BPlusTree.
 	 * @return the root node of that tree
@@ -57,7 +57,8 @@ public abstract class Node {
 	}
 	
     //TODO
-	
+	//TODO: do we want to refactor the storage for logging purposes? and how will we do it
+
 	/**
      * Search for records with the specified value
      * @param key search key (numVotes)
@@ -145,78 +146,84 @@ public abstract class Node {
     	
         int key = record.getNumVotes();
         // Insert by traversing the tree from the root node
-        root.insertInternal(key, pointer, 0, null);
-        return root;
+        KeyNode newRoot = root.insertInternal(key, pointer, null);
+        return newRoot.getNode();
     }
 
     /**
      * Insertion in B+ tree (recursive)
      * @param node current node
      * @param entry entry to be inserted
-     * @param newChildEntry key-node pair which points to split child, null if child was not split
-     * @return a node if current node is split, otherwise null
+     * @param splitChild key-node pair which points to split child, null if child was not split
+     * @return a KeyNode of either the new root or the split child if current node was split, otherwise null
      */
-    public Map<int, Node> insertInternal(int recordKey, RecordPointer recordPointer, int nodeKey, Node newChildEntry) {
+    public KeyNode insertInternal(int key, RecordPointer pointer, KeyNode splitChild) {
     	boolean split = false;
         if (this instanceof InternalNode) {
             InternalNode curNode = (InternalNode) this;
 
             // Find index of pointer to leftmost node that can be inserted with the entry
-            int child = curNode.findIndexOfNode(recordKey);
+            int child = curNode.findIndexOfNode(key);
 
             // Insert entry to subtree
-            newChildEntry = curNode.getPointers()[child].insertInternal(recordKey, recordPointer, nodeKey, newChildEntry);
+            splitChild = curNode.getPointers()[child].insertInternal(key, pointer, splitChild);
 
-            if (newChildEntry != null) {
-                newChildEntry.setParent(curNode);
+            if (splitChild != null) {
+            	splitChild.getNode().setParent(curNode);
                 if (curNode.getDegree() < getN()+1) {
                     // Insert entry to node if it is not full
-                    curNode.addSorted(newChildEntry);
-                    newChildEntry = null;
+                    curNode.addSorted(splitChild.getKey(), splitChild.getNode());
+                    //TODO: figure out if this is necessary or redundant
+                    splitChild = null;
                 } else {
                     // Split node if it is full
-                    newChildEntry = splitNode(curNode, newChildEntry);
+                	splitChild = splitNode(curNode, splitChild);
                     split = true;
 
                     // Increase number of nodes
                     ++totalNodes;
                 }
             }
-
-        } else if (node instanceof LeafNode) {
-            LeafNode leafNode = (LeafNode) node;
-            if (leafNode.getDegree() < maxKeysLeaf) {
+        } else if (this instanceof LeafNode) {
+            LeafNode leafNode = (LeafNode) this;
+            if (leafNode.getDegree() < getN()) {
                 // Add entry to leaf node if it is not full
-                leafNode.addSorted(entry);
-                newChildEntry = null;
+                leafNode.addSorted(key, pointer);
+                //TODO: figure out if this is necessary or redundant
+                splitChild = null;
             } else {
                 // Split leaf if it is full
-                newChildEntry = splitLeaf(leafNode, entry);
+                splitChild = splitLeaf(leafNode, key, pointer);
                 split = true;
 
+                //TODO: Confirm that this can be tracked by degree; add recursive function to get this
                 // Increase number of nodes
                 ++totalNodes;
             }
         }
 
-        if (split && root == node) {
+        if (split && this.isRoot()) {
             // If root is split, add a new node to be the root
-            InternalNode newNode = new InternalNode(n);
-            newNode.addPointer(node, newNode.getDegree());
-            newNode.addSorted(newChildEntry);
-            node.setParent(newNode);
-            newChildEntry.getNode().setParent(newNode);
-            root = newNode;
+            InternalNode newNode = new InternalNode(true);
+            newNode.addPointer(this, newNode.getDegree());
+            newNode.addSorted(splitChild.getKey(), splitChild.getNode());
+            this.setParent(newNode);
+            splitChild.getNode().setParent(newNode);
+            //TODO: finish debugging and delete this
+            if(this.getHeight() != splitChild.getNode().getHeight()) {
+            	System.out.println("Height tracking fked up somewhere");
+            }
+            newNode.setHeight(this.getHeight()+1);
 
-            // Increase height of tree and number of nodes
-            ++height;
+            //TODO: Confirm that this can be tracked by degree; add recursive function to get this
+            // Increase number of nodes
             ++totalNodes;
+            return new KeyNode(0, newNode);
         }
-
-        return newChildEntry;
+        return splitChild;
     }
     
-	//TODO: helper functions
+	//TODO: helper functions (mostly done)
 
     //TODO: Rename to findIndexInParent
     /**
@@ -278,6 +285,23 @@ public abstract class Node {
         keys[keys.length - 1] = 0;
     }
 	
+    /**
+     * Recursively find the total number of nodes in a B+ tree
+     * @param root root node of the current subtree
+     * @return total number of nodes from the subtree (inclusive of root)
+     */
+    public static int getTotalNodes(Node root) {
+    	if(root instanceof LeafNode) {
+    		return 1;
+    	}
+    	int total = 0;
+    	InternalNode root1 = (InternalNode) root;
+    	for(int i = 0; i < root1.getDegree(); i++) {
+    		total += getTotalNodes(root1.getPointers()[i]);
+    	}
+    	return total+1;
+    }
+
 	public static int getN() {
 		return Node.n;
 	}
