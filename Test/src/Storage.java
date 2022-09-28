@@ -14,12 +14,17 @@ public class Storage {
     private final int NUM_OF_RECORD;
 
     private byte[] blocks ;
-    private int blockTailIdx;
+    private int blockTail;
     private LinkedList<RecordPointer> buffer; // changed emptyRecord to buffer? Buffer to store the list of available spaces to be populated by KeyPointers
 
     private BPlusTree bPlusTree;
-    private AccessLogger accLog;
 
+    // Logging Components
+    private List<RecordPointer> accessedBlocks;
+    private List<Node> accessedNodes;
+    private int blockAccessCount;
+    private int nodeAccessCount;
+    private final int MAX_ACCESS = 5;
 
     public Storage(int blockSize, int recordSize, int memorySize) {
         MEMORY_SIZE = memorySize;
@@ -27,10 +32,11 @@ public class Storage {
         RECORD_SIZE = recordSize;
         NUM_OF_RECORD = BLOCK_SIZE / RECORD_SIZE;
 
+        blockTail = -1;
         blocks = new byte[MEMORY_SIZE];
-        blockTailIdx = -1;
         buffer = new LinkedList<>();
-        accLog = new AccessLogger(this);
+
+        initLogger();
     }
 
     // Initialise the storage with the given input file in .tsv format
@@ -66,7 +72,7 @@ public class Storage {
     public void buildIndex() {
         bPlusTree = new BPlusTree(Util.getNFromBlockSize(BLOCK_SIZE), this);
         // Iterates through data blocks
-        for (int blockID = 0; blockID <= blockTailIdx; ++blockID) {
+        for (int blockID = 0; blockID <= blockTail; ++blockID) {
             Block block = Block.fromByteArray(readBlock(blockID), RECORD_SIZE);
             // Iterates through all record spaces since non-clustered index is used
             for (int recordID = 0; recordID < NUM_OF_RECORD; ++recordID) {
@@ -107,7 +113,7 @@ public class Storage {
      */
     public Record readRecord(RecordPointer address) {
         // Reading a record incurs an I/O access to its block
-        accLog.addBlock(address);
+        logBlockAccess(address);
         Block block = Block.fromByteArray(readBlock(address.getBlockID()), RECORD_SIZE);
         Record record = block.readRecord(address.getRecordID());
         return record;
@@ -129,11 +135,11 @@ public class Storage {
      * Prepare a new block so that it can be used.
      */
     public void createBlock() {
-        blockTailIdx++;
+        blockTail++;
         Block block = Block.empty(BLOCK_SIZE, RECORD_SIZE);
-        updateBlock(blockTailIdx, block.toByteArray());
+        updateBlock(blockTail, block.toByteArray());
         for(int recordID = 0; recordID < NUM_OF_RECORD ; ++recordID) {
-            buffer.add(new RecordPointer(blockTailIdx, recordID));
+            buffer.add(new RecordPointer(blockTail, recordID));
         }
     }
 
@@ -200,34 +206,69 @@ public class Storage {
     }
 
     public int getNumBlocksUsed() {
-        return blockTailIdx + 1;
+        return blockTail + 1;
     }
 
     public int getRecordSize() {
         return RECORD_SIZE;
     }
 
+    private void initLogger() {
+        accessedBlocks = new LinkedList<>();
+        accessedNodes = new LinkedList<>();
+        blockAccessCount = 0;
+        nodeAccessCount = 0;
+    }
+
+    public void logBlockAccess(RecordPointer recordPointer) {
+        blockAccessCount++;
+        if (accessedBlocks.size() < MAX_ACCESS)
+            accessedBlocks.add(recordPointer);
+    }
+
     public void logNodeAccess(Node node) {
-        accLog.addNode(node);
+        nodeAccessCount++;
+        if (accessedNodes.size() < MAX_ACCESS)
+            accessedNodes.add(node);
     }
 
     public void resetLog() {
-        accLog.reset();
-    }
-
-    public String getNodeLog() {
-        return accLog.getNodeAccess();
+        blockAccessCount = 0;
+        nodeAccessCount = 0;
+        accessedBlocks.clear();
+        accessedNodes.clear();
     }
 
     public String getBlockLog() {
-        return accLog.getBlockAccess();
+        StringBuilder sb = new StringBuilder();
+        for(int i = 1; i <= accessedBlocks.size(); i++) {
+            RecordPointer recordPointer = accessedBlocks.get(i);
+            byte[] byteArray = readBlock(recordPointer.getBlockID());
+            Block block = Block.fromByteArray(byteArray, getRecordSize());
+            sb.append(String.format("%d. ", i));
+            sb.append(block);
+            sb.append("\n");
+        }
+        return sb.toString();
+    }
+
+    public String getNodeLog() {
+        StringBuilder sb = new StringBuilder();
+        for(int i = 1; i <= accessedNodes.size(); i++) {
+            Node node = accessedNodes.get(i);
+            sb.append(String.format("%d. ", i));
+            sb.append(node);
+            sb.append("\n");
+        }
+        return sb.toString();
     }
 
     public int getNumBlockAccess() {
-        return accLog.getNumBlockAccess();
+        return blockAccessCount;
     }
 
     public int getNumNodeAccess() {
-        return accLog.getNumNodeAccess();
+        return nodeAccessCount;
     }
 }
+

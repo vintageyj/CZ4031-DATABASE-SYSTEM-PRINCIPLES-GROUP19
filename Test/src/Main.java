@@ -1,22 +1,23 @@
 import java.util.List;
 
-public class Main {
+public class Main implements Constants{
 
     public static void main(String[] args) {
         System.out.println("Running Application");
 
-        for (int blockSize : new int[]{100, 500}) {
+        for (int blockSize : new int[]{BLOCK_SIZE_1, BLOCK_SIZE_2}) {
             System.out.println();
             System.out.println("===============================================");
             System.out.printf("BLOCK SIZE: %d bytes\n", blockSize);
 
-            Storage st = new Storage(blockSize, 19, 100 << 20);
+            Storage st = new Storage(blockSize, RECORD_SIZE, MEMORY_SIZE);
             st.initWithTSV("data.tsv");
 
             // Experiment 1
             System.out.println("EXPERIMENT 1");
             System.out.println("Number of blocks: " + st.getNumBlocksUsed());
-            System.out.println("Size of database: " + st.getNumBlocksUsed() * blockSize / 1_000_000 + " MB (" + st.getNumBlocksUsed() * blockSize + " bytes)");
+            System.out.println(String.format("Size of database: %dMB ( %d bytes )", st.getNumBlocksUsed() * blockSize / MB, st.getNumBlocksUsed() * blockSize));
+//            System.out.println("Size of database: " + st.getNumBlocksUsed() * blockSize / MB + " MB (" + st.getNumBlocksUsed() * blockSize + " bytes)");
 
             // Experiment 2
             st.buildIndex();
@@ -28,7 +29,7 @@ public class Main {
             System.out.println("Content of first child of root node: " + ((InternalNode)st.getBPT().getRoot()).getPointers()[0]);
 
             // Experiment 3
-            List<Record> recordsExpt3 = st.searchBPT(500);
+            List<Record> recordsExpt3 = st.searchBPT(EXPERIMENT_3_KEY);
             System.out.println("\n\nEXPERIMENT 3");
             System.out.println("Number of index nodes accessed: " + st.getNumNodeAccess());
             System.out.println("Index nodes accesses:");
@@ -45,7 +46,7 @@ public class Main {
 
 
             // Experiment 4
-            List<Record> recordsExpt4 = st.searchBPT(30000, 40000);
+            List<Record> recordsExpt4 = st.searchBPT(EXPERIMENT_4_LOWER, EXPERIMENT_4_UPPER);
             System.out.println("\n\nEXPERIMENT 4");
             System.out.println("Number of index nodes accessed: " + st.getNumNodeAccess());
             System.out.println("Index nodes accesses:");
@@ -61,7 +62,7 @@ public class Main {
             System.out.println("Average of averageRatings returned: " + avgOfAvgRatingExpt4);
 
             // Experiment 5
-            st.deleteBPT(1000);
+            st.deleteBPT(EXPERIMENT_5_KEY);
             System.out.println("\n\nEXPERIMENT 5");
             System.out.println("Total number of deleted nodes: " + st.getBPT().getTotalNodesDeleted());
             System.out.println("Number of nodes of updated B+ tree: " + st.getBPT().getTotalNodes());
