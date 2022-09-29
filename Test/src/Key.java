@@ -1,7 +1,7 @@
 import java.util.Arrays;
 
 /**
- * Class representing key of a node in a B+ tree
+ * DEPRECATED Class representing key of a node in a B+ tree
  */
 public class Key implements Comparable<Key> {
 

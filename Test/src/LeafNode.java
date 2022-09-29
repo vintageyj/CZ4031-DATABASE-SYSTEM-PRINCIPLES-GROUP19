@@ -53,10 +53,10 @@ public class LeafNode extends Node {
     }
 
     /**
-     * Split full leaf node into two parts
+     * Split full leaf node into two parts (one of which may be an overflow leaf node)
      * @param node leaf node to be split
      * @param entry entry to be added
-     * @return pair of the smallest key in second node and pointer to second node
+     * @return pair of the smallest key in second node and pointer to second node, or null if an overflow leaf node was created
      */
     public KeyNode splitLeaf(int key, RecordPointer entry) {
         int[] keys = getKeys();
@@ -66,9 +66,6 @@ public class LeafNode extends Node {
         setKeys(Arrays.copyOf(keys, keys.length+1));
         setPointers(Arrays.copyOf(pointers, pointers.length+1));
 
-        // Find midpoint to split node
-        int mid = (int) Math.ceil((getN()+1)/2.0);
-
         // Find on which index the key and pointer can be inserted to arrays in order to keep it sorted
         int indexToInsert = findIndexToInsert(key);
 
@@ -76,28 +73,68 @@ public class LeafNode extends Node {
         insertAndShift(key, indexToInsert);
         insertAndShift(entry, indexToInsert);
 
-        // Split key and pointer arrays into half
-        int[] firstHalfKeys = Arrays.copyOfRange(getKeys(), 0, mid);
-        RecordPointer[] firstHalfPointers = Arrays.copyOfRange(getPointers(), 0, mid);
-        int[] secondHalfKeys = Arrays.copyOfRange(getKeys(), mid, getKeys().length);
-        RecordPointer[] secondHalfPointers = Arrays.copyOfRange(getPointers(), mid, getPointers().length);
+        // Find point to split node by checking for distinct keys
+        int mid = (int) Math.ceil((getN()+1)/2.0);
+        int mid2 = mid; // This way mid2 will always exceed the range of valid indices first
+        int mid1 = mid2-1;
+        while(mid1 >= 0 || mid2 < getKeys().length) {
+        	if(mid2 < getKeys().length && getKeys()[mid2] != getKeys()[mid2-1]) {
+        		mid = mid2;
+        		break;
+        	} else if(getKeys()[mid1] != getKeys()[mid1+1]) {
+        		mid = mid1;
+        		break;
+        	}
+        	mid2++;
+        	mid1--;
+        }
 
-        // Set key-value pairs to nodes
-        setKeys(Arrays.copyOf(firstHalfKeys, keys.length));
-        setPointers(Arrays.copyOf(firstHalfPointers, pointers.length));
-        setDegree(firstHalfPointers.length);
+        if(mid1 < 0 && mid2 >= getKeys().length) {
+        	// All the keys have been checked, and no distinct keys exist
+        	// Create overflow node
+        	int[] firstHalfKeys = Arrays.copyOfRange(getKeys(), 0, keys.length);
+            RecordPointer[] firstHalfPointers = Arrays.copyOfRange(getPointers(), 0, keys.length);
+            int[] secondHalfKeys = Arrays.copyOfRange(getKeys(), keys.length, getKeys().length);
+            RecordPointer[] secondHalfPointers = Arrays.copyOfRange(getPointers(), keys.length, getPointers().length);
 
-        // Create a new node to store the split key-value pairs
-        LeafNode newLeaf = new LeafNode(secondHalfPointers.length, false, Arrays.copyOf(secondHalfKeys, keys.length),
-        		Arrays.copyOf(secondHalfPointers, pointers.length));
+            // Set key-value pairs to nodes
+            setKeys(Arrays.copyOf(firstHalfKeys, keys.length));
+            setPointers(Arrays.copyOf(firstHalfPointers, pointers.length));
+            setDegree(firstHalfPointers.length);
+            
+            // Create a new node to store the split key-value pairs
+            LeafNode overflowLeaf = new LeafNode(secondHalfPointers.length, false, Arrays.copyOf(secondHalfKeys, keys.length),
+            		Arrays.copyOf(secondHalfPointers, pointers.length));
 
-        // Modify sibling relations on leaf nodes
-        LeafNode rightSibling = getRightSibling();
-        setRightSibling(newLeaf);
-        newLeaf.setRightSibling(rightSibling);
+        	// Modify sibling relations on leaf nodes
+            LeafNode rightSibling = getRightSibling();
+            setRightSibling(overflowLeaf);
+            overflowLeaf.setRightSibling(rightSibling);
+            return null;
+        } else {
+        	// Split key and pointer arrays into half
+            int[] firstHalfKeys = Arrays.copyOfRange(getKeys(), 0, mid);
+            RecordPointer[] firstHalfPointers = Arrays.copyOfRange(getPointers(), 0, mid);
+            int[] secondHalfKeys = Arrays.copyOfRange(getKeys(), mid, getKeys().length);
+            RecordPointer[] secondHalfPointers = Arrays.copyOfRange(getPointers(), mid, getPointers().length);
 
-        // Return pair of the smallest key in second node and pointer to second node
-        return new KeyNode(newLeaf.getKeys()[0], newLeaf);
+            // Set key-value pairs to nodes
+            setKeys(Arrays.copyOf(firstHalfKeys, keys.length));
+            setPointers(Arrays.copyOf(firstHalfPointers, pointers.length));
+            setDegree(firstHalfPointers.length);
+
+            // Create a new node to store the split key-value pairs
+            LeafNode newLeaf = new LeafNode(secondHalfPointers.length, false, Arrays.copyOf(secondHalfKeys, keys.length),
+            		Arrays.copyOf(secondHalfPointers, pointers.length));
+
+            // Modify sibling relations on leaf nodes
+            LeafNode rightSibling = getRightSibling();
+            setRightSibling(newLeaf);
+            newLeaf.setRightSibling(rightSibling);
+
+            // Return pair of the smallest key in second node and pointer to second node
+            return new KeyNode(newLeaf.getKeys()[0], newLeaf);
+        }
     }
 
     /**

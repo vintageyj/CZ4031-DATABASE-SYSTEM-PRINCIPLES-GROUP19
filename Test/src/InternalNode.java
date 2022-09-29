@@ -56,15 +56,15 @@ public class InternalNode extends Node {
         setKeys(Arrays.copyOf(keys, keys.length+1));
         setPointers(Arrays.copyOf(pointers, pointers.length+1));
 
-        // Find midpoint to split node, with first half having the extra pointer if relevant
-        int mid = (int) Math.ceil(getN()/2.0);
-
         // Find on which index the key and pointer can be inserted in order to keep it sorted
         int indexToInsertKey = findIndexToInsert(newKeyPointer.getKey());
 
         // Insert key and pointer to temporary arrays
         insertAndShift(newKeyPointer.getKey(), indexToInsertKey);
         insertAndShift(newKeyPointer.getNode(), indexToInsertKey+1);
+
+        // Find midpoint to split node, with first half having the extra pointer if relevant
+        int mid = (int) Math.ceil(getN()/2.0);
 
         // Split key and pointer arrays in half
         int[] firstHalfKeys = Arrays.copyOfRange(getKeys(), 0, mid);
@@ -94,7 +94,6 @@ public class InternalNode extends Node {
         return new KeyNode(keys[mid], newNode);
     }
 
-    //TODO: Helper functions
     /**
      * Find index of child node based on key value provided
      * @param key value of key
