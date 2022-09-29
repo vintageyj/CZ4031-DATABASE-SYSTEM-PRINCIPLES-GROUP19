@@ -15,7 +15,6 @@ public class RecordPointer {
 
     /**
      * Construct record address
-     * 
      * @param blockID  block id
      * @param recordID record id
      */
