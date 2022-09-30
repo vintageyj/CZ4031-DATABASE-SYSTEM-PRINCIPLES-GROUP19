@@ -44,6 +44,30 @@ public class InternalNode extends Node {
     }
 
     /**
+     * Merge 2 internal nodes by appending keys and pointers of source node to destination node
+     * @param src source internal node
+     */
+    public void merge(InternalNode src) {
+        // Change parent of source node's child nodes to destination node
+        for (int i = 0; i < src.getDegree(); ++i) {
+            src.getPointers()[i].setParent(this);
+        }
+
+        // Copy all keys and pointers of the source node to the back of the destination
+        // node
+        System.arraycopy(src.getKeys(), 0, getKeys(), getDegree()-1, src.getDegree() - 1);
+        System.arraycopy(src.getPointers(), 0, getPointers(), getDegree(), src.getDegree());
+        setDegree(src.getDegree() + getDegree());
+
+        // Delete source node
+        src.setParent(null);
+        src.deleteAll();
+
+        // Increase number of nodes deleted
+        totalNodesDeleted++;
+    }
+
+    /**
      * Split full internal node into two parts
      * @param newKeyPointer key and pointer to be added
      * @return the smallest key in the split off node and pointer to that node

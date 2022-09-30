@@ -222,35 +222,32 @@ public abstract class Node {
     //TODO: complete refactoring
     /**
      * Delete all entries having the specified key as its primary key
-     * @param key key to delete
+     * @param deleteKey key to delete
      */
-    public static void delete(Node root, int key) {
+    public static void delete(Node root, int deleteKey) {
         // Initialize total number of nodes deleted for experiment
-        int totalNodesDeleted = 0;
+        totalNodesDeleted = 0;
         if (root == null) {
-            return;
+        	return;
         }
-        
+
         // Keep deleting until the key is not found in the B+ tree
         DeleteResult result;
         do {
-            result = root.deleteInternal(key);
-            root = result.getParentNode();
+            result = root.deleteInternal(deleteKey, null);
         } while (result != null && result.isFound());
     }
 
-    //TODO: rename deleteInternal to bPlusDelete
     /**
      * Internal implementation of deletion in B+ tree
-     * 
-     * @param key key to delete
-     * @return result object consisting of index of deleted child node, parent of
-     *         traversed node,
-     *         and boolean indicating if an entry is deleted
+     * @param curNode current node
+     * @param deleteKey key to delete
+     * @param oldChildIndex index of deleted child node if any, otherwise null
+     * @return result object consisting of index of deleted child node, parent of traversed node,
+     * and boolean indicating if an entry is deleted
      */
-    public DeleteResult deleteInternal(int key) {
+    public DeleteResult deleteInternal(int deleteKey, Integer oldChildIndex) {
         DeleteResult result;
-        Integer oldChildIndex = null;
         InternalNode parentNode = this.getParent();
         boolean found = false;
 
@@ -258,73 +255,76 @@ public abstract class Node {
             InternalNode node = (InternalNode) this;
 
             // Find pointer to node possibly containing key to delete
-            int childIndex = node.findIndexOfNode(key);
+            int pointerIndex = node.findIndexOfNode(deleteKey);
 
             // Recursively delete
-            result = node.getPointers()[childIndex].deleteInternal(key);
+            result = deleteInternal(node.getPointers()[pointerIndex], deleteKey, oldChildIndex);
 
             // Retrieve index of deleted child node, null if no deletion
             oldChildIndex = result.getOldChildIndex();
 
+            // Set current node since parent of traversed nodes in the lower level may be different after recursion
+            node = result.getParentNode();
             found = result.isFound();
 
             if (found && oldChildIndex != null) {
                 // Delete key and pointer to deleted child node
-                node.deleteKey(oldChildIndex - 1);
+                node.deleteKey(oldChildIndex-1);
                 node.deletePointer(oldChildIndex);
+                parentNode = node.getParent();
 
-                if (node.getDegree() >= (int) Math.floor(getN()/2.0)+1 || node.isRoot()) {
+                if (node.getDegree() >= minDegreeInternal || node == root) {
                     oldChildIndex = null;
                 } else {
                     // Find index of pointer to current node in parent
-                    int curIndex = findIndexOfPointer(parentNode, node);
+                    int curNodeIndex = findIndexOfPointer(parentNode, node);
 
                     // Get left and right siblings of current node
                     InternalNode rightSibling = null, leftSibling = null;
-                    if (curIndex > 0) {
-                        leftSibling = (InternalNode) parentNode.getPointers()[curIndex - 1];
+                    if (curNodeIndex > 0) {
+                        leftSibling = (InternalNode) parentNode.getPointers()[curNodeIndex - 1];
                     }
-                    if (curIndex < getN()) {
-                        rightSibling = (InternalNode) parentNode.getPointers()[curIndex + 1];
+                    if (curNodeIndex < maxDegreeInternal - 1) {
+                        rightSibling = (InternalNode) parentNode.getPointers()[curNodeIndex + 1];
                     }
 
-                    if (rightSibling != null && rightSibling.getDegree() > (int) Math.floor(getN()/2.0)+1) {
+                    if (rightSibling != null && rightSibling.getDegree() > minDegreeInternal) {
                         // If right sibling has extra entries, borrow from right sibling
                         // Move first key and pointer of right sibling to current node
                         moveEntryToLeftInternalNode(node, rightSibling);
 
                         // Swap moved key value with parent key value
-                        int temp = node.getKeys()[node.getDegree() - 2];
-                        node.getKeys()[node.getDegree() - 2] = parentNode.getKeys()[curIndex];
-                        parentNode.getKeys()[curIndex] = temp;
+                        Key temp = node.getKeys()[node.getDegree()-2];
+                        node.getKeys()[node.getDegree()-2] = parentNode.getKeys()[curNodeIndex];
+                        parentNode.getKeys()[curNodeIndex] = temp;
                         oldChildIndex = null;
-                    } else if (leftSibling != null && leftSibling.getDegree() > (int) Math.floor(getN()/2.0)+1) {
+                    } else if (leftSibling != null && leftSibling.getDegree() > minDegreeInternal) {
                         // If left sibling has extra entries, borrow from left sibling
                         // Move last key and pointer of left sibling to current node
                         moveEntryToRightInternalNode(leftSibling, node);
 
                         // Swap moved key value with parent key value
-                        int temp = node.getKeys()[0];
-                        node.getKeys()[0] = parentNode.getKeys()[curIndex - 1];
-                        parentNode.getKeys()[curIndex - 1] = temp;
+                        Key temp = node.getKeys()[0];
+                        node.getKeys()[0] = parentNode.getKeys()[curNodeIndex - 1];
+                        parentNode.getKeys()[curNodeIndex - 1] = temp;
                         oldChildIndex = null;
                     } else if (rightSibling != null) {
                         // If right sibling does not have extra entries, merge with right sibling
                         // Set right sibling node to be removed
-                        oldChildIndex = curIndex + 1;
+                        oldChildIndex = curNodeIndex + 1;
 
                         // Pull down key from parent to current node
-                        node.addKey(parentNode.getKeys()[curIndex], node.getDegree() - 1);
+                        node.addKey(parentNode.getKeys()[curNodeIndex], node.getDegree() - 1);
 
                         // Merge right sibling node to current node
                         merge(rightSibling, node);
                     } else if (leftSibling != null) {
                         // If left sibling does not have extra entries, merge with left sibling
                         // Set current node to be removed
-                        oldChildIndex = curIndex;
+                        oldChildIndex = curNodeIndex;
 
                         // Pull down key from parent to left node
-                        leftSibling.addKey(parentNode.getKeys()[curIndex - 1], leftSibling.getDegree() - 1);
+                        leftSibling.addKey(parentNode.getKeys()[curNodeIndex - 1], leftSibling.getDegree() - 1);
 
                         // Merge current node to left sibling node
                         merge(node, leftSibling);
@@ -332,186 +332,94 @@ public abstract class Node {
                 }
             }
 
-            // If root only has 1 child, replace root with child
-            if (node.isRoot() && node.getDegree() == 1) {
-                Node newRoot = node.getPointers()[0];
-                newRoot.setParent(null);
-                node.deleteAll();
-                //TODO: Increase total number of deleted nodes
-                //totalNodesDeleted++;
-                //TODO: return newRoot as the new root
-                return new DeleteResult(oldChildIndex, newRoot, found);
+            // If current node is root, and it only has 1 child, make child node the new root
+            if (root == node && root.getDegree() == 1) {
+                InternalNode temp = (InternalNode) root;
+                root = ((InternalNode) root).getPointers()[0];
+                root.setParent(null);
+                temp.deleteAll();
+
+                // Decrease height of tree and number of nodes, increase total number of deleted nodes
+                --height;
+                --totalNodes;
+                ++totalNodesDeleted;
             }
+
         } else if (this instanceof LeafNode) {
             LeafNode node = (LeafNode) this;
 
-            RecordPointer deletedPointer = node.delete(key);
+            // Traverse leaf nodes to search for key to delete, since it is possible that the current node
+            // does not contain the key
+            KeyValuePair deletedEntry = node.delete(deleteKey);
+            while (deletedEntry == null && node != null && node.getDegree() > 0
+                    && deleteKey >= node.getKvPairs()[node.getDegree()-1].getKey().getK1()) {
+                node = node.getRightSibling();
+                if (node != null) deletedEntry = node.delete(deleteKey);
+            }
+
             // Delete entry in storage
-            if (deletedPointer != null) {
+            if (deletedEntry != null) {
                 found = true;
-                storage.deleteRecord(deletedPointer);
+                st.deleteRecord(deletedEntry.getRecordAddress());
             }
 
-            if (found) {
-            	// Check if node has attached overflow leaf nodes
-            	LeafNode rightSibling = node.getRightSibling();
-                if(rightSibling != null && rightSibling.getParent() == null) {
-                	// Shift entry from overflow leaf node to current node
-                	int overflowKey = rightSibling.getKeys()[0];
-                	RecordPointer entry = rightSibling.deleteByIndex(0);
-                    node.addSorted(overflowKey, entry);
-                    if(rightSibling.getDegree() == 0) {
-                    	// Delete empty overflow leaf node
-                    	node.setRightSibling(rightSibling.getRightSibling());
-                    	totalNodesDeleted++;
-                    }
-                    //TODO: return wtv necessary
-                    return new DeleteResult(oldChildIndex, parentNode, found);
+            if (found && node.getDegree() < minKeysLeaf && node != root) {
+                // Set parent node since current node may have a different parent after traversing leaf nodes
+                parentNode = node.getParent();
+
+                // Find index of pointer to current node in its parent
+                int curNodeIndex = findIndexOfPointer(parentNode, node);
+
+                // Get left and right siblings of current node, if any
+                LeafNode rightSibling = null, leftSibling = null;
+                if (curNodeIndex < parentNode.getDegree() - 1) {
+                    rightSibling = node.getRightSibling();
                 }
-                
-                // Check if node is under capacity
-                if (!node.isRoot() && node.getDegree() < (int) Math.floor(getN()+1/2.0) && !node.isRoot()) {
-                    boolean borrowed = false;
-                    // Find index of pointer to current node in its parent
-                    int curIndex = findIndexOfPointer(parentNode, node);
-                    
-                    LeafNode leftSibling = null;
-                    if (curIndex > 0) {
-                    	leftSibling = (LeafNode) parentNode.getPointers()[curIndex-1];
-                    }
+                if (curNodeIndex > 0) {
+                    leftSibling = node.getLeftSibling();
+                }
 
-                    //TODO: if smallest key is deleted how to update parent node???? use found & oldChildIndex
-                    // Attempt to borrow keys
-                    // Check if the right sibling is a sibling node
-                    if (rightSibling != null && rightSibling.getParent() == node.getParent()) {
-                        // Check if we can borrow from right sibling
-                    	if (rightSibling.getDegree() > (int) Math.floor(getN()+1/2.0)) {
-                    		// Get count of smallest key in right sibling
-                    		int count = 0;
-                    		while (count+1 < rightSibling.getDegree()) {
-                    			if (rightSibling.getKeys()[count] == rightSibling.getKeys()[count+1]) {
-                    				count++;
-                    			} else {
-                    				break;
-                    			}
-                    		}
-                    		count++;
-                    		
-                    		// Check if smallest key in right sibling node can be shifted into current node without worsening balance
-                    		if (count < getN()-node.getDegree() && rightSibling.getDegree()-count >= (int) Math.floor(getN()+1/2.0)) {
-                    			// Shift those entries into the current node
-                    			for (int i = 0; i < count; i++) {
-                    				int siblingKey = rightSibling.getKeys()[0];
-                    				RecordPointer entry = rightSibling.deleteByIndex(0);
-                                    node.addSorted(siblingKey, entry);
-                    			}
+                if (rightSibling != null && rightSibling.getDegree() > minKeysLeaf) {
+                    // Borrow from right sibling
+                    KeyValuePair entry = rightSibling.deleteByIndex(0);
+                    node.addSorted(entry);
 
-                    			// Set leftmost key of right sibling to be key value of parent
-                    			parentNode.getKeys()[curIndex] = rightSibling.getKeys()[0];
-                    			borrowed = true;
-                    		}
-                    	}
-                    }
-                    // Check if the left sibling is a sibling node
-                    if (!borrowed && leftSibling != null && leftSibling.getRightSibling() == node) {
-                    	// Check if we can borrow from left sibling
-                        if (leftSibling.getDegree() > (int) Math.floor(getN()+1/2.0)) {
-                        	// Get count of largest key in left sibling
-                        	int count = 0;
-                       		while (count+1 < leftSibling.getDegree()) {
-                       			if (leftSibling.getKeys()[leftSibling.getDegree()-count-1] == leftSibling.getKeys()[leftSibling.getDegree()-count-2]) {
-                        			count++;
-                        		} else {
-                        			break;
-                        		}
-                       		}
-                       		count++;
+                    // Set leftmost key of right sibling to be key value of parent
+                    parentNode.getKeys()[curNodeIndex] = rightSibling.getKvPairs()[0].getKey();
+                } else if (leftSibling != null && leftSibling.getDegree() > minKeysLeaf) {
+                    // Borrow from left sibling
+                    KeyValuePair entry = leftSibling.deleteByIndex(leftSibling.getDegree() - 1);
+                    node.addSorted(entry);
 
-                        	// Check if largest key in left sibling node can be shifted into current node without worsening balance
-                        	if (count < getN()-node.getDegree() && leftSibling.getDegree()-count >= (int) Math.floor(getN()+1/2.0)) {
-                       			// Shift those entries into the current node
-                       			for (int i = 0; i < count; i++) {
-                       				int siblingKey = leftSibling.getKeys()[leftSibling.getDegree()-1];
-                       				RecordPointer entry = leftSibling.deleteByIndex(leftSibling.getDegree()-1);
-                                       node.addSorted(siblingKey, entry);
-                       			}
+                    // Set rightmost key of current node to be key value of parent
+                    parentNode.getKeys()[curNodeIndex-1] = node.getKvPairs()[0].getKey();
+                } else if (rightSibling != null) {
+                    // Merge with right sibling
+                    oldChildIndex = curNodeIndex+1;
+                    merge(rightSibling, node);
 
-                        		// Set leftmost key of right sibling to be key value of parent
-                        		parentNode.getKeys()[curIndex-1] = node.getKeys()[0];
-                        		borrowed = true;
-                       		}
-                       	}
-                	}
-                    // TODO: Propagate key changes upwards
-                    if (borrowed) {
-                    	
-                    }
-                    // Attempt to merge nodes if borrowing is not possible
-                    if(!borrowed) {
-                    	//TODO: merge with either right or left sibling if merger is possible
-                    	// Attempt merge with right sibling
-                    	// Check if the right sibling is a sibling node
-                    	if (rightSibling != null && rightSibling.getParent() == node.getParent()) {
-                    		// Check that right sibling can fit into current node
-                    		if (rightSibling.getDegree() <= (int) Math.floor(getN()+1/2.0)) {
-                    			oldChildIndex = curIndex+1;
-                    			node.merge(rightSibling);
-                                // Modify siblings of nodes
-                                node.setRightSibling(rightSibling.getRightSibling());
-                    		}
-                    	}
-                    	// Attempt merge with left sibling
-                    	// Check if the left sibling is a sibling node
-                    	if (leftSibling != null && leftSibling.getRightSibling() == node) {
-                    		// Check that current node can fit into left sibling
-                    		if (leftSibling.getDegree() <= (int) Math.floor(getN()+1/2.0)) {
-                    			oldChildIndex = curIndex;
-                    			leftSibling.merge(node);
-                                // Modify siblings of nodes
-                    			leftSibling.setRightSibling(node.getRightSibling());
-                    		}
-                    	}
-                    }
+                    // Modify siblings of nodes
+                    node.setRightSibling(rightSibling.getRightSibling());
+                    if (node.getRightSibling() != null) node.getRightSibling().setLeftSibling(node);
+                } else if (leftSibling != null) {
+                    // Merge with left sibling
+                    oldChildIndex = curNodeIndex;
+                    merge(node, leftSibling);
+
+                    // Modify siblings of nodes
+                    leftSibling.setRightSibling(node.getRightSibling());
+                    if (leftSibling.getRightSibling() != null) leftSibling.getRightSibling().setLeftSibling(leftSibling);
                 }
             }
 
-            // If root has no records delete the empty tree by returning null
-            if (node.isRoot() && node.getDegree() == 0) {
-            	//TODO: return null for the root to indicate deleted tree
+            if (node == root && root.getDegree() == 0) {
+                root = null;
             }
         }
 
         // Return object consisting of index of deleted child (if any), parent of current node,
         // and a boolean indicating whether an entry is deleted
         return new DeleteResult(oldChildIndex, parentNode, found);
-    }
-
-    //TODO: Shift to internalnode class, might have to edit as well
-    /**
-     * Merge 2 internal nodes by appending keys and pointers of source node to
-     * destination node
-     * 
-     * @param src source internal node
-     * @param dst destination internal node, used to store the merged node
-     */
-    public void merge(InternalNode src, InternalNode dst) {
-        // Change parent of source node's child nodes to destination node
-        for (int i = 0; i < src.getDegree(); ++i) {
-            src.getPointers()[i].setParent(dst);
-        }
-
-        // Copy all keys and pointers of the source node to the back of the destination
-        // node
-        System.arraycopy(src.getKeys(), 0, dst.getKeys(), dst.getDegree(), src.getDegree() - 1);
-        System.arraycopy(src.getPointers(), 0, dst.getPointers(), dst.getDegree(), src.getDegree());
-        dst.setDegree(src.getDegree() + dst.getDegree());
-
-        // Delete source node
-        src.setParent(null);
-        src.deleteAll();
-
-        // Increase number of nodes deleted
-        totalNodesDeleted++;
     }
 
     /**

@@ -60,6 +60,7 @@ public class LeafNode extends Node {
         // Copy all key-value pairs of the source node to the back of the destination
         // node
         System.arraycopy(src.getKeys(), 0, getKeys(), getDegree(), src.getDegree());
+        System.arraycopy(src.getPointers(), 0, getPointers(), getDegree(), src.getDegree());
         setDegree(getDegree() + src.getDegree());
 
         // Delete source node
