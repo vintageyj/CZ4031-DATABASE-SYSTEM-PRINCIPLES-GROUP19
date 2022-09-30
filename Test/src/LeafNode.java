@@ -7,9 +7,9 @@ import java.util.Arrays;
 public class LeafNode extends Node {
     
     /**
-     * Array of pointers to records
+     * Array of pointers to linked lists containing record pointers
      */
-    private RecordPointer[] pointers;
+    private RecordNode[] pointers;
 
     /**
      * Right sibling of the leaf node
