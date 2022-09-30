@@ -21,7 +21,7 @@ public class LeafNode extends Node {
      * @param isRoot whether the node is a root node
      */
     public LeafNode(boolean isRoot) {
-        this(0, isRoot, new int [getN()], new RecordPointer [getN()], null, null);
+        this(0, isRoot, new int [getN()], new RecordNode [getN()], null, null);
     }
 
     /**
@@ -32,7 +32,7 @@ public class LeafNode extends Node {
      * @param keys array of keys
      * @param pointers array of pointers to records
      */
-    public LeafNode(int degree, boolean isRoot, int[] keys, RecordPointer[] pointers) {
+    public LeafNode(int degree, boolean isRoot, int[] keys, RecordNode[] pointers) {
         this(degree, isRoot, keys, pointers, null, null);
     }
 
@@ -46,7 +46,7 @@ public class LeafNode extends Node {
      * @param parent parent node
      * @param rightSibling right sibling node
      */
-    public LeafNode(int degree, boolean isRoot, int[] keys, RecordPointer[] pointers, InternalNode parent, LeafNode rightSibling) {
+    public LeafNode(int degree, boolean isRoot, int[] keys, RecordNode[] pointers, InternalNode parent, LeafNode rightSibling) {
     	super(0, degree, isRoot, keys, parent);
         this.pointers = pointers;
         this.rightSibling = rightSibling;
@@ -79,7 +79,7 @@ public class LeafNode extends Node {
      */
     public KeyNode splitLeaf(int key, RecordPointer entry) {
         int[] keys = getKeys();
-        RecordPointer[] pointers = getPointers();
+        RecordNode[] pointers = getPointers();
 
         // Temporarily update arrays to store the existing and to be added entry
         setKeys(Arrays.copyOf(keys, keys.length+1));
@@ -92,73 +92,35 @@ public class LeafNode extends Node {
         insertAndShift(key, indexToInsert);
         insertAndShift(entry, indexToInsert);
 
-        // Find point to split node by checking for distinct keys
-        int mid = -1;
-        int mid2 = (int) Math.ceil((getN()+1)/2.0); // This way mid2 will always exceed the range of valid indices first
-        int mid1 = mid2-1;
-        while(mid1 >= 0 || mid2 < getKeys().length) {
-        	if(mid2 < getKeys().length && getKeys()[mid2] != getKeys()[mid2-1]) {
-        		mid = mid2;
-        		break;
-        	} else if(getKeys()[mid1] != getKeys()[mid1+1]) {
-        		mid = mid1;
-        		break;
-        	}
-        	mid2++;
-        	mid1--;
-        }
+        // Find point to split node
+        int mid = (int) Math.floor((getN()+1)/2.0);
+       
+        // Split key and pointer arrays into half
+        int[] firstHalfKeys = Arrays.copyOfRange(getKeys(), 0, mid);
+        RecordNode[] firstHalfPointers = Arrays.copyOfRange(getPointers(), 0, mid);
+        int[] secondHalfKeys = Arrays.copyOfRange(getKeys(), mid, getKeys().length);
+        RecordNode[] secondHalfPointers = Arrays.copyOfRange(getPointers(), mid, getPointers().length);
 
-        if(mid == -1) {
-        	// All the keys have been checked, and no distinct keys exist
-        	// Create overflow node
-        	int[] firstHalfKeys = Arrays.copyOfRange(getKeys(), 0, keys.length);
-            RecordPointer[] firstHalfPointers = Arrays.copyOfRange(getPointers(), 0, keys.length);
-            int[] secondHalfKeys = Arrays.copyOfRange(getKeys(), keys.length, getKeys().length);
-            RecordPointer[] secondHalfPointers = Arrays.copyOfRange(getPointers(), keys.length, getPointers().length);
+        // Set key-value pairs to nodes
+        setKeys(Arrays.copyOf(firstHalfKeys, keys.length));
+        setPointers(Arrays.copyOf(firstHalfPointers, pointers.length));
+        setDegree(firstHalfPointers.length);
 
-            // Set key-value pairs to nodes
-            setKeys(Arrays.copyOf(firstHalfKeys, keys.length));
-            setPointers(Arrays.copyOf(firstHalfPointers, pointers.length));
-            setDegree(firstHalfPointers.length);
-            
-            // Create a new node to store the split key-value pairs
-            LeafNode overflowLeaf = new LeafNode(secondHalfPointers.length, false, Arrays.copyOf(secondHalfKeys, keys.length),
-            		Arrays.copyOf(secondHalfPointers, pointers.length));
+        // Create a new node to store the split key-value pairs
+        LeafNode newLeaf = new LeafNode(secondHalfPointers.length, false, Arrays.copyOf(secondHalfKeys, keys.length),
+        		Arrays.copyOf(secondHalfPointers, pointers.length));
 
-        	// Modify sibling relations on leaf nodes
-            LeafNode rightSibling = getRightSibling();
-            setRightSibling(overflowLeaf);
-            overflowLeaf.setRightSibling(rightSibling);
-            return null;
-        } else {
-        	// Split key and pointer arrays into half
-            int[] firstHalfKeys = Arrays.copyOfRange(getKeys(), 0, mid);
-            RecordPointer[] firstHalfPointers = Arrays.copyOfRange(getPointers(), 0, mid);
-            int[] secondHalfKeys = Arrays.copyOfRange(getKeys(), mid, getKeys().length);
-            RecordPointer[] secondHalfPointers = Arrays.copyOfRange(getPointers(), mid, getPointers().length);
+        // Modify sibling relations on leaf nodes
+        LeafNode rightSibling = getRightSibling();
+        setRightSibling(newLeaf);
+        newLeaf.setRightSibling(rightSibling);
 
-            // Set key-value pairs to nodes
-            setKeys(Arrays.copyOf(firstHalfKeys, keys.length));
-            setPointers(Arrays.copyOf(firstHalfPointers, pointers.length));
-            setDegree(firstHalfPointers.length);
-
-            // Create a new node to store the split key-value pairs
-            LeafNode newLeaf = new LeafNode(secondHalfPointers.length, false, Arrays.copyOf(secondHalfKeys, keys.length),
-            		Arrays.copyOf(secondHalfPointers, pointers.length));
-
-            // Modify sibling relations on leaf nodes
-            LeafNode rightSibling = getRightSibling();
-            setRightSibling(newLeaf);
-            newLeaf.setRightSibling(rightSibling);
-
-            // Return pair of the smallest key in second node and pointer to second node
-            return new KeyNode(newLeaf.getKeys()[0], newLeaf);
-        }
+        // Return pair of the smallest key in second node and pointer to second node
+        return new KeyNode(newLeaf.getKeys()[0], newLeaf);
     }
 
     /**
-     * Insert a record pointer to a specific index in the array of pointers, shift the pointers affected by the insertion
-     * and delete last pointer in the array
+     * Insert a record pointer in a new linked list to a specific index in the array of linked lists, shift the linked lists affected by the insertion and delete last linked list in the array
      * @param pointer record pointer to be inserted
      * @param pos index to insert
      */
@@ -166,12 +128,15 @@ public class LeafNode extends Node {
         for (int i = pointers.length - 1; i > pos; i--) {
         	pointers[i] = pointers[i-1];
         }
-        pointers[pos] = pointer;
+        RecordPointer[] newPointers = new RecordPointer[RecordNode.getMaxSize()];
+		newPointers[0] = pointer;
+		RecordNode newHead = new RecordNode(1, newPointers, null);
+        pointers[pos] = newHead;
     }
 
     /**
-     * Delete a record pointer on the specified index in the array of pointers, then shift the pointers accordingly
-     * @param pos position of pointer to be deleted
+     * Delete a linked list on the specified index in the array of linked lists, then shift the linked lists accordingly
+     * @param pos position of linked list to be deleted
      */
     public void deleteAndShift(int pos) {
         for (int i = pos; i < pointers.length - 1; ++i) {
@@ -187,40 +152,46 @@ public class LeafNode extends Node {
      */
     public void addSorted(int key, RecordPointer pointer) {
         int index = findIndexToInsert(key);
-        insertAndShift(key, index);
-        insertAndShift(pointer, index);
-        setDegree(getDegree()+1);
+        if(getKeys()[index] == key) {
+        	// Insert into the already existing linked list
+        	getPointers()[index] = getPointers()[index].addPointer(pointer);
+        } else {
+        	// Create a new linked list
+        	insertAndShift(key, index);
+        	insertAndShift(pointer, index);
+            setDegree(getDegree()+1);
+        }
     }
 
     /**
-     * Delete a record that matches the key value
+     * Delete records that match the key value
      * @param key key to delete
-     * @return the deleted record's pointer if found, otherwise null
+     * @return the deleted records' linked list if found, otherwise null
      */
-    public RecordPointer delete(int key) {
+    public RecordNode delete(int key) {
         for (int i = 0; i < getDegree(); i++) {
             if (getKeys()[i] == key) {
-            	RecordPointer pointer = pointers[i];
+            	RecordNode list = pointers[i];
             	super.deleteAndShift(i);
                 deleteAndShift(i);
                 setDegree(getDegree()-1);
-                return pointer;
+                return list;
             }
         }
         return null;
     }
 
     /**
-     * Delete an entry by its index in the node
+     * Delete an entry's corresponding linked list by its index in the node
      * @param index index of entry to be deleted
      * @return deleted entry
      */
-    public RecordPointer deleteByIndex(int index) {
-    	RecordPointer pointer = pointers[index];
+    public RecordNode deleteByIndex(int index) {
+    	RecordNode list = pointers[index];
     	super.deleteAndShift(index);
         deleteAndShift(index);
         setDegree(getDegree()-1);
-        return pointer;
+        return list;
     }
 
     /**
@@ -232,11 +203,11 @@ public class LeafNode extends Node {
         setDegree(0);
     }
 
-    public RecordPointer[] getPointers() {
+    public RecordNode[] getPointers() {
         return pointers;
     }
 
-    public void setPointers(RecordPointer[] pointers) {
+    public void setPointers(RecordNode[] pointers) {
         this.pointers = pointers;
     }
 

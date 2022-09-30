@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -40,19 +41,39 @@ public class RecordNode {
     /**
      * Add a record pointer to the linked list node
      * @param pointer record pointer to be added
+     * @return new head of linked list
      */
-    public void addPointer(RecordPointer pointer) {
-    	this.pointers[this.size] = pointer;
-    	this.size++;
+    public RecordNode addPointer(RecordPointer pointer) {
+    	if (this.size < maxSize) {
+    		// Insert into current linked list
+    		this.pointers[this.size] = pointer;
+        	this.size++;
+        	return this;
+    	} else {
+    		// Create a new linked list node as the head of the linked list
+    		RecordPointer[] newPointers = new RecordPointer[maxSize];
+    		newPointers[0] = pointer;
+    		RecordNode newHead = new RecordNode(1, newPointers, this);
+    		return newHead;
+    	}
     }
     
     /**
-     * Retrieve a record pointer from a specific index
+     * Retrieve all record pointers from the linked list
      * @param pos index of the record pointer to be retrieved
      * @return record pointer
      */
-    public RecordPointer retrievePointer(int pos) {
-    	return this.pointers[pos];
+    public ArrayList<RecordPointer> retrievePointers() {
+    	ArrayList<RecordPointer> pointers = new ArrayList<RecordPointer>();
+    	RecordNode cur = this;
+    	while (cur != null) {
+    		for(int i = 0; i < cur.getSize(); i++) {
+    			pointers.add(cur.getPointers()[i]);
+    		}
+    		cur = cur.getNext();
+    	}
+    	
+    	return pointers;
     }
 
     /**

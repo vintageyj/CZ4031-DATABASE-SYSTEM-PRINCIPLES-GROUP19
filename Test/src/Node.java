@@ -102,7 +102,7 @@ public abstract class Node {
             	// Add to result if current key value is within lower and upper bounds
                 // Finish search if it is higher than the upper bound
                 if (lower <= keys[i] && keys[i] <= upper) {
-                	results.add(node.getPointers()[i]);
+                	results.addAll(node.getPointers()[i].retrievePointers());
                 } else if (upper < keys[i]) {
                 	return results;
                 }
@@ -168,7 +168,7 @@ public abstract class Node {
                     // Insert entry to node if it is not full
                     curNode.addSorted(splitChild.getKey(), splitChild.getNode());
                     // No nodes were split after insertion
-                    return null;
+                    splitChild = null;
                 } else {
                     // Split node if it is full
                 	splitChild = curNode.splitNode(splitChild);
@@ -176,45 +176,39 @@ public abstract class Node {
                 }
             }
         } else if (this instanceof LeafNode) {
-            LeafNode leafNode = (LeafNode) this;
-            if (leafNode.getDegree() < getN()) {
-                // Add entry to leaf node if it is not full
-                leafNode.addSorted(key, pointer);
+            LeafNode curNode = (LeafNode) this;
+            if (curNode.getDegree() < getN() || curNode.getKeys()[curNode.findIndexToInsert(key)] == key) {
+                // Add entry to leaf node if it is not full or if key is already present
+            	curNode.addSorted(key, pointer);
                 // No nodes were split after insertion
-                return null;
+            	splitChild = null;
             } else {
-            	// Check for pre-existing overflow leaf nodes
-            	LeafNode rightSibling = leafNode.getRightSibling();
-            	while (rightSibling != null && rightSibling.getParent() == null) {
-            		if (rightSibling.getDegree() < getN()) {
-            			// Add entry to overflow leaf node if it is not full
-            			rightSibling.addSorted(key, pointer);
-            			// No nodes were split after insertion
-            			return null;
-            		}
-            		rightSibling = rightSibling.getRightSibling();
-            	}
                 // Split leaf if it is full (overflow leaf nodes which are not pointed to by internal nodes may be created)
-                splitChild = leafNode.splitLeaf(key, pointer);
+                splitChild = curNode.splitLeaf(key, pointer);
                 if (splitChild != null) {
                 	split = true;
                 }
             }
         }
 
-        if (split && this.isRoot()) {
-            // If root is split, add a new node to be the root
-            InternalNode newNode = new InternalNode(true);
-            newNode.addPointer(this, newNode.getDegree());
-            newNode.addSorted(splitChild.getKey(), splitChild.getNode());
-            setParent(newNode);
-            splitChild.getNode().setParent(newNode);
-            //TODO: finish debugging and delete this
-            if(getHeight() != splitChild.getNode().getHeight()) {
-            	System.out.println("Height tracking fked up somewhere");
-            }
-            newNode.setHeight(getHeight()+1);
-            return new KeyNode(0, newNode);
+        if (this.isRoot()) {
+        	if (split) {
+        		// If root is split, add a new node to be the root
+                InternalNode newNode = new InternalNode(true);
+                newNode.addPointer(this, newNode.getDegree());
+                newNode.addSorted(splitChild.getKey(), splitChild.getNode());
+                setParent(newNode);
+                splitChild.getNode().setParent(newNode);
+                //TODO: finish debugging and delete this
+                if(getHeight() != splitChild.getNode().getHeight()) {
+                	System.out.println("Height tracking fked up somewhere");
+                }
+                newNode.setHeight(getHeight()+1);
+                return new KeyNode(0, newNode);
+        	} else {
+        		// Return the root node to calling method
+        		return new KeyNode(0, this);
+        	}
         }
         return splitChild;
     }
