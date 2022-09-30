@@ -5,7 +5,7 @@ import java.util.Arrays;
  * Extends Node abstract class
  */
 public class LeafNode extends Node {
-    
+
     /**
      * Array of pointers to linked lists containing record pointers
      */
@@ -17,7 +17,13 @@ public class LeafNode extends Node {
     private LeafNode rightSibling;
 
     /**
+     * Storage to keep track of deleted nodes
+     */
+    private Storage storage;
+
+    /**
      * Construct an empty leaf node specified with whether it is a root node
+     * 
      * @param isRoot whether the node is a root node
      */
     public LeafNode(boolean isRoot) {
@@ -26,10 +32,12 @@ public class LeafNode extends Node {
 
     /**
      * 
-     * Construct a leaf node with current degree, whether it is a root node, array of keys and record pointers
-     * @param degree current degree of node
-     * @param isRoot whether the node is a root node
-     * @param keys array of keys
+     * Construct a leaf node with current degree, whether it is a root node, array
+     * of keys and record pointers
+     * 
+     * @param degree   current degree of node
+     * @param isRoot   whether the node is a root node
+     * @param keys     array of keys
      * @param pointers array of pointers to records
      */
     public LeafNode(int degree, boolean isRoot, int[] keys, RecordNode[] pointers) {
@@ -39,11 +47,12 @@ public class LeafNode extends Node {
     /**
      * 
      * Construct a leaf node with all attributes
-     * @param degree current degree of node
-     * @param isRoot whether the node is a root node
-     * @param keys array of keys
-     * @param pointers array of pointers to records
-     * @param parent parent node
+     * 
+     * @param degree       current degree of node
+     * @param isRoot       whether the node is a root node
+     * @param keys         array of keys
+     * @param pointers     array of pointers to records
+     * @param parent       parent node
      * @param rightSibling right sibling node
      */
     public LeafNode(int degree, boolean isRoot, int[] keys, RecordNode[] pointers, InternalNode parent, LeafNode rightSibling) {
@@ -53,7 +62,9 @@ public class LeafNode extends Node {
     }
 
     /**
-     * Merge another leaf node into this leaf node by appending key-value pairs of the source node to the calling node
+     * Merge another leaf node into this leaf node by appending key-value pairs of
+     * the source node to the calling node
+     * 
      * @param src source leaf node
      */
     public void merge(LeafNode src) {
@@ -66,26 +77,27 @@ public class LeafNode extends Node {
         // Delete source node
         src.deleteAll();
 
-        // Increase number of nodes deleted
-        //TODO: return somehow
-        ++totalNodesDeleted;
     }
 
     /**
-     * Split full leaf node into two parts (one of which may be an overflow leaf node)
-     * @param node leaf node to be split
+     * Split full leaf node into two parts (one of which may be an overflow leaf
+     * node)
+     * 
+     * @param node  leaf node to be split
      * @param entry entry to be added
-     * @return pair of the smallest key in second node and pointer to second node, or null if an overflow leaf node was created
+     * @return pair of the smallest key in second node and pointer to second node,
+     *         or null if an overflow leaf node was created
      */
     public KeyNode splitLeaf(int key, RecordPointer entry) {
         int[] keys = getKeys();
         RecordNode[] pointers = getPointers();
 
         // Temporarily update arrays to store the existing and to be added entry
-        setKeys(Arrays.copyOf(keys, keys.length+1));
-        setPointers(Arrays.copyOf(pointers, pointers.length+1));
+        setKeys(Arrays.copyOf(keys, keys.length + 1));
+        setPointers(Arrays.copyOf(pointers, pointers.length + 1));
 
-        // Find on which index the key and pointer can be inserted to arrays in order to keep it sorted
+        // Find on which index the key and pointer can be inserted to arrays in order to
+        // keep it sorted
         int indexToInsert = findIndexToInsert(key);
 
         // Insert key and pointer
@@ -122,11 +134,11 @@ public class LeafNode extends Node {
     /**
      * Insert a record pointer in a new linked list to a specific index in the array of linked lists, shift the linked lists affected by the insertion and delete last linked list in the array
      * @param pointer record pointer to be inserted
-     * @param pos index to insert
+     * @param pos     index to insert
      */
     public void insertAndShift(RecordPointer pointer, int pos) {
         for (int i = pointers.length - 1; i > pos; i--) {
-        	pointers[i] = pointers[i-1];
+            pointers[i] = pointers[i - 1];
         }
         RecordPointer[] newPointers = new RecordPointer[RecordNode.getMaxSize()];
 		newPointers[0] = pointer;
@@ -140,14 +152,15 @@ public class LeafNode extends Node {
      */
     public void deleteAndShift(int pos) {
         for (int i = pos; i < pointers.length - 1; ++i) {
-        	pointers[i] = pointers[i+1];
+            pointers[i] = pointers[i + 1];
         }
         pointers[pointers.length - 1] = null;
     }
 
     /**
      * Insert entry to leaf node while keeping the keys and record pointers sorted
-     * @param key key to be inserted
+     * 
+     * @param key     key to be inserted
      * @param pointer record pointer to be inserted
      */
     public void addSorted(int key, RecordPointer pointer) {
@@ -201,6 +214,11 @@ public class LeafNode extends Node {
         Arrays.fill(pointers, null);
         Arrays.fill(getKeys(), 0);
         setDegree(0);
+
+        // Increase number of nodes deleted
+        // Calls the logDeletedNodeCount() in storage to update the count of deleted
+        // nodes
+        storage.logDeletedNodeCount();
     }
 
     public RecordNode[] getPointers() {
@@ -227,7 +245,7 @@ public class LeafNode extends Node {
             sb.append(getKeys()[i]);
             sb.append(", ");
         }
-        sb.replace(sb.length()-2, sb.length()-1, "]");
+        sb.replace(sb.length() - 2, sb.length() - 1, "]");
         return sb.toString();
     }
 }

@@ -50,11 +50,6 @@ public class BPlusTree {
     private int totalNodes;
 
     /**
-     * Total number of nodes deleted in a delete operation
-     */
-    private int totalNodesDeleted;
-
-    /**
      * Storage, for logging purposes
      */
     private Storage st;
@@ -76,7 +71,6 @@ public class BPlusTree {
         this.minKeysLeaf = (int) Math.floor((n + 1) / 2.0);
         this.height = 0;
         this.totalNodes = 0;
-        this.totalNodesDeleted = 0;
         this.st = st;
     }
 
@@ -263,8 +257,6 @@ public class BPlusTree {
      * @param deleteKey key to delete
      */
     public void delete(int deleteKey) {
-        // Initialize total number of nodes deleted for experiment
-        totalNodesDeleted = 0;
 
         // Keep deleting until the key is not found in the B+ tree
         DeleteResult result;
@@ -387,7 +379,6 @@ public class BPlusTree {
                 // nodes
                 --height;
                 --totalNodes;
-                ++totalNodesDeleted;
             }
 
         } else if (curNode instanceof LeafNode) {
@@ -478,7 +469,6 @@ public class BPlusTree {
         src.deleteAll();
 
         // Increase number of nodes deleted
-        ++totalNodesDeleted;
         --totalNodes;
     }
 
@@ -499,7 +489,6 @@ public class BPlusTree {
         src.deleteAll();
 
         // Increase number of nodes deleted
-        ++totalNodesDeleted;
         --totalNodes;
     }
 
@@ -694,10 +683,6 @@ public class BPlusTree {
 
     public int getTotalNodes() {
         return totalNodes;
-    }
-
-    public int getTotalNodesDeleted() {
-        return totalNodesDeleted;
     }
 
     public String toString() {
