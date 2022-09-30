@@ -53,6 +53,24 @@ public class LeafNode extends Node {
     }
 
     /**
+     * Merge another leaf node into this leaf node by appending key-value pairs of the source node to the calling node
+     * @param src source leaf node
+     */
+    public void merge(LeafNode src) {
+        // Copy all key-value pairs of the source node to the back of the destination
+        // node
+        System.arraycopy(src.getKeys(), 0, getKeys(), getDegree(), src.getDegree());
+        setDegree(getDegree() + src.getDegree());
+
+        // Delete source node
+        src.deleteAll();
+
+        // Increase number of nodes deleted
+        //TODO: return somehow
+        ++totalNodesDeleted;
+    }
+
+    /**
      * Split full leaf node into two parts (one of which may be an overflow leaf node)
      * @param node leaf node to be split
      * @param entry entry to be added
@@ -74,8 +92,8 @@ public class LeafNode extends Node {
         insertAndShift(entry, indexToInsert);
 
         // Find point to split node by checking for distinct keys
-        int mid = (int) Math.ceil((getN()+1)/2.0);
-        int mid2 = mid; // This way mid2 will always exceed the range of valid indices first
+        int mid = -1;
+        int mid2 = (int) Math.ceil((getN()+1)/2.0); // This way mid2 will always exceed the range of valid indices first
         int mid1 = mid2-1;
         while(mid1 >= 0 || mid2 < getKeys().length) {
         	if(mid2 < getKeys().length && getKeys()[mid2] != getKeys()[mid2-1]) {
@@ -89,7 +107,7 @@ public class LeafNode extends Node {
         	mid1--;
         }
 
-        if(mid1 < 0 && mid2 >= getKeys().length) {
+        if(mid == -1) {
         	// All the keys have been checked, and no distinct keys exist
         	// Create overflow node
         	int[] firstHalfKeys = Arrays.copyOfRange(getKeys(), 0, keys.length);
