@@ -636,6 +636,33 @@ public abstract class Node {
     	return total+1;
     }
 
+    public void fixTree() {
+        if(this == null || this instanceof LeafNode) {
+            return;
+        }
+        else if (this instanceof InternalNode) {
+            InternalNode internalNode = (InternalNode) this;
+
+            for (int i = 1; i < internalNode.getDegree(); i++) { // Skip the first pointer
+                Node rightNode = internalNode.getPointers()[i];
+                replaceKey(internalNode.getKeys()[i-1], rightNode.getLowestKey());
+                rightNode.fixTree();
+            }
+        }
+    }
+
+    // Pass in internal, non-root nodes
+    public int getLowestKey() {
+        if (this instanceof LeafNode) {
+            LeafNode leafNode = (LeafNode) this;
+            return leafNode.getKeys()[0];
+        } else if (this instanceof InternalNode) {
+            InternalNode node = (InternalNode) this;
+            return node.getPointers()[0].getLowestKey();
+        }
+        return -1;
+    }
+
     public static Storage getStorage() {
     	return Node.storage;
     }
@@ -683,6 +710,15 @@ public abstract class Node {
 
     public int[] getKeys() {
     	return this.keys;
+    }
+
+    public void replaceKey(int oldKey, int newKey) {
+        for (int i = 0; i < keys.length; i++) {
+            if (keys[i] == oldKey) {
+                keys[i] = newKey;
+                return;
+            }
+        }
     }
     
     public void setKeys(int[] keys) {
