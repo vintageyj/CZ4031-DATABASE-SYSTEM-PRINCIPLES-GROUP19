@@ -300,7 +300,7 @@ public class InternalNode extends Node {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("[");
-        for (int i = 0; i < getDegree(); i++) {
+        for (int i = 0; i < getDegree()-1; i++) {
             sb.append(getKeys()[i]);
             sb.append(", ");
         }

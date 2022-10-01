@@ -171,7 +171,7 @@ public abstract class Node {
             int child = curNode.findIndexOfNode(key);
             //TODO: debug and delete
             System.out.println("Child:" +child);
-            System.out.println(curNode);
+            System.out.println("Internal Node:"+curNode);
             System.out.println(curNode.getDegree());
             for(int i = 0; i < curNode.getDegree(); i++) {
                 System.out.println(curNode.getPointers()[i]);
@@ -218,7 +218,8 @@ public abstract class Node {
         		// If root is split, add a new node to be the root
                 InternalNode newNode = new InternalNode(true);
                 newNode.addPointer(this, newNode.getDegree());
-                newNode.addSorted(splitChild.getKey(), splitChild.getNode());
+                newNode.addPointer(splitChild.getNode(), newNode.getDegree());
+                newNode.addKey(splitChild.getKey(), 0);
                 setParent(newNode);
                 splitChild.getNode().setParent(newNode);
                 //TODO: finish debugging and delete this
@@ -226,6 +227,8 @@ public abstract class Node {
                 	System.out.println("Height tracking fked up somewhere");
                 }
                 newNode.setHeight(getHeight()+1);
+                //TODO:debug
+                System.out.println("height of new root: "+newNode.getHeight());
                 return new KeyNode(0, newNode);
         	} else {
         		// Return the root node to calling method
