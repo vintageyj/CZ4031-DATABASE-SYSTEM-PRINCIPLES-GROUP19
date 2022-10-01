@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="2627ea4f-9b10-4486-b3fb-4ee682d54b5d" name="Changes" comment="" />
+    <list default="true" id="2627ea4f-9b10-4486-b3fb-4ee682d54b5d" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Storage.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Storage.java" afterDir="false" />
+    </list>
     <list id="113964fa-ce39-4de1-91f3-caff5627a48a" name="Changes by tomth" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -18,17 +21,6 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
-  </component>
-  <component name="LineStatusTrackerManager">
-    <file path="$PROJECT_DIR$/src/Storage.java">
-      <ranges>
-        <range start1="20" end1="21" start2="20" end2="21" changelist="2627ea4f-9b10-4486-b3fb-4ee682d54b5d" />
-        <range start1="75" end1="76" start2="75" end2="76" changelist="2627ea4f-9b10-4486-b3fb-4ee682d54b5d" />
-        <range start1="83" end1="84" start2="83" end2="84" changelist="2627ea4f-9b10-4486-b3fb-4ee682d54b5d" />
-        <range start1="175" end1="176" start2="175" end2="176" changelist="113964fa-ce39-4de1-91f3-caff5627a48a" />
-        <range start1="216" end1="217" start2="216" end2="217" changelist="113964fa-ce39-4de1-91f3-caff5627a48a" />
-      </ranges>
-    </file>
   </component>
   <component name="ProjectId" id="2F7GA0XLKCQtHrOXh269c8lFsRq" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -76,6 +68,7 @@
       <workItem from="1664455924124" duration="2647000" />
       <workItem from="1664547866904" duration="5969000" />
       <workItem from="1664613984857" duration="2474000" />
+      <workItem from="1664635447513" duration="617000" />
     </task>
     <servers />
   </component>
