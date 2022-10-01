@@ -106,7 +106,7 @@ public class Storage {
 
         // Retrieve the block storing the next available space
         Block block = Block.fromByteArray(readBlock(address.getBlockID()), RECORD_SIZE);
-        block.updateRecord(address.getRecordID(), tConst, rating, numVotes);
+        block.updateRecord(address.getRecordID(), tConst, rating, numVotes, false);
         updateBlock(address.getBlockID(), block.toByteArray());
 
         return address;

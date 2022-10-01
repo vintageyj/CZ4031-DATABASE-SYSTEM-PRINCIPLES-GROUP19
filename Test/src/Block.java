@@ -36,7 +36,7 @@ public class Block {
     public static Block empty(int blockSize, int recordSize) {
         Record[] records = new Record[blockSize/recordSize];
         for (int i = 0; i < records.length; ++i) {
-            records[i] = Record.empty();
+            records[i] = new Record();
         }
         return new Block(records, blockSize);
     }
@@ -99,9 +99,11 @@ public class Block {
      * @param avgRating average rating attribute
      * @param numVotes number of votes attribute
      */
+    /* 
     public void updateRecord(int recordId, String tconstStr, float avgRating, int numVotes) {
         updateRecord(recordId, tconstStr, avgRating, numVotes, false);
     }
+    */
 
     /**
      * Update a record given the id, values and empty flag

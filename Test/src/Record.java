@@ -35,9 +35,11 @@ public class Record {
      * Construct an empty record
      * @return empty record
      */
+    /* 
     public static Record empty() {
         return new Record();
     }
+    */
 
     public boolean isEmpty() {
         return empty;
