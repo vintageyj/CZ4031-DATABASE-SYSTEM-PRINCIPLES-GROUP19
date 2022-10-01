@@ -170,8 +170,12 @@ public abstract class Node {
             // Find index of pointer to leftmost node that can be inserted with the entry
             int child = curNode.findIndexOfNode(key);
             //TODO: debug and delete
-            System.out.println(child);
+            System.out.println("Child:" +child);
             System.out.println(curNode);
+            System.out.println(curNode.getDegree());
+            for(int i = 0; i < curNode.getDegree(); i++) {
+                System.out.println(curNode.getPointers()[i]);
+            }
             
             // Insert entry to subtree
             splitChild = curNode.getPointers()[child].insertInternal(key, pointer);
@@ -192,6 +196,7 @@ public abstract class Node {
         } else if (this instanceof LeafNode) {
             LeafNode curNode = (LeafNode) this;
             if (curNode.getDegree() < getN() || curNode.getKeys()[curNode.findIndexToInsert(key)] == key) {
+                //TODO: debug and delete
                 System.out.println(curNode.getDegree());
                 // Add entry to leaf node if it is not full or if key is already present
             	curNode.addSorted(key, pointer);
@@ -208,6 +213,8 @@ public abstract class Node {
 
         if (this.isRoot()) {
         	if (split) {
+        	    //TODO:debug
+        	    System.out.println("split happened");
         		// If root is split, add a new node to be the root
                 InternalNode newNode = new InternalNode(true);
                 newNode.addPointer(this, newNode.getDegree());
@@ -228,7 +235,6 @@ public abstract class Node {
         return splitChild;
     }
 
-    // TODO: complete refactoring
     /**
      * Delete all entries having the specified key as its primary key
      * 
@@ -355,9 +361,9 @@ public abstract class Node {
 
             // Fix the remaining keys in the node
             // TODO: might actly be redundant now??
-            if (found) {
-                node.fixTree();
-            }
+//            if (found) {
+//                node.fixTree();
+//            }
 
             // If current node is root, return root
             if (node.isRoot()) {
