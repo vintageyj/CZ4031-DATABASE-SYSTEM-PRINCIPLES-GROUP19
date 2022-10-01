@@ -3,7 +3,7 @@ import java.util.ArrayList;
 /**
  * Interface representing a node in a B+ tree
  */
-public abstract class Node {
+public class Node {
     /**
      * Storage for logging purposes
      */
@@ -649,5 +649,7 @@ public abstract class Node {
         this.parent = parent;
     }
 
-    public abstract String toString();
+    public String toString() {
+        
+    }
 }

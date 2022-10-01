@@ -24,12 +24,12 @@ public class Main implements Constants {
             // Experiment 2
             st.buildIndex();
             System.out.println("\n\nEXPERIMENT 2");
-            System.out.println("Parameter n of B+ tree: " + st.getBPT().getN());
-            System.out.println("Number of nodes in B+ tree: " + st.getBPT().getTotalNodes());
+            System.out.println("Parameter n of B+ tree: " + Node.getN());
+            System.out.println("Number of nodes in B+ tree: " + Node.getTotalNodes(st.getBPT()));
             System.out.println("Height of B+ tree: " + st.getBPT().getHeight());
-            System.out.println("Content of root node: " + st.getBPT().getRoot());
+            System.out.println("Content of root node: " + st.getBPT());
             System.out.println(
-                    "Content of first child of root node: " + ((InternalNode) st.getBPT().getRoot()).getPointers()[0]);
+                    "Content of first child of root node: " + ((InternalNode) st.getBPT()).getPointers()[0]);
 
             // Experiment 3
             List<Record> recordsExpt3 = st.searchBPT(EXPERIMENT_3_KEY);
@@ -64,14 +64,14 @@ public class Main implements Constants {
             System.out.println("Average of averageRatings returned: " + avgOfAvgRatingExpt4);
 
             // Experiment 5
-            st.deleteBPT(EXPERIMENT_5_KEY);
+            st.deleteBPT(st.getBPT(), EXPERIMENT_5_KEY);
             System.out.println("\n\nEXPERIMENT 5");
             System.out.println("Total number of deleted nodes: " + st.getDeletedNodeCount());
-            System.out.println("Number of nodes of updated B+ tree: " + st.getBPT().getTotalNodes());
+            System.out.println("Number of nodes of updated B+ tree: " + Node.getTotalNodes(st.getBPT()));
             System.out.println("Height of updated B+ tree: " + st.getBPT().getHeight());
-            System.out.println("Content of root node: " + st.getBPT().getRoot());
+            System.out.println("Content of root node: " + st.getBPT());
             System.out.println(
-                    "Content of first child of root node: " + ((InternalNode) st.getBPT().getRoot()).getPointers()[0]);
+                    "Content of first child of root node: " + ((InternalNode) st.getBPT()).getPointers()[0]);
         }
     }
 }
