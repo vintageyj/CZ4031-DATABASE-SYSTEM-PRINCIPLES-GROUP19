@@ -65,9 +65,13 @@ public class InternalNode extends Node {
             src.getPointers()[i].setParent(this);
         }
 
+        //TODO: debug and delete
+        if (getKeys()[getDegree()-1] == 0) {
+            System.out.println("smth went wrong during merging internalnodes");
+        }
         // Copy all keys and pointers of the source node to the back of the destination
         // node
-        System.arraycopy(src.getKeys(), 0, getKeys(), getDegree() - 1, src.getDegree() - 1);
+        System.arraycopy(src.getKeys(), 0, getKeys(), getDegree(), src.getDegree() - 1);
         System.arraycopy(src.getPointers(), 0, getPointers(), getDegree(), src.getDegree());
         setDegree(src.getDegree() + getDegree());
 
@@ -75,6 +79,41 @@ public class InternalNode extends Node {
         src.setParent(null);
         src.deleteAll();
 
+    }
+
+
+    /**
+     * Move the leftmost key and pointer of right internal node to left internal
+     * node
+     * 
+     * @param right right internal node (source)
+     */
+    public void moveEntryFromRightInternalNode(InternalNode right) {
+        // Delete the first key and pointer of the node on the right
+        int key = right.deleteKey(0);
+        Node pointer = right.deletePointer(0);
+
+        // Add the key and pointer to the back of the node on the left
+        this.addKey(key, this.getDegree() - 1);
+        this.addPointer(pointer, this.getDegree());
+        pointer.setParent(this);
+    }
+
+    /**
+     * Move the rightmost key and pointer of left internal node to right internal
+     * node
+     * 
+     * @param left  left internal node (source)
+     */
+    public void moveEntryFromLeftInternalNode(InternalNode left) {
+        // Delete the last key and pointer of the node on the left
+        int key = left.deleteKey(left.getDegree() - 2);
+        Node pointer = left.deletePointer(left.getDegree() - 1);
+
+        // Add the key and pointer to the start of the node on the right
+        this.addKey(key, 0);
+        this.addPointer(pointer, 0);
+        pointer.setParent(this);
     }
 
     /**

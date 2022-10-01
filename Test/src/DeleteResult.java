@@ -1,5 +1,5 @@
 /**
- * Class representing result of deletion in B+ tree, used as a helper to implement recursive deletion on the tree
+ * Class representing result of deletion in B+ tree (wrapper class for returning values in deletion)
  */
 public class DeleteResult {
 
@@ -8,7 +8,7 @@ public class DeleteResult {
      */
     private Integer oldChildIndex;
 
-    private Node parentNode;
+    private InternalNode parentNode;
 
     /**
      * Indicates if an entry has been deleted
@@ -18,9 +18,10 @@ public class DeleteResult {
     /**
      * Construct a DeleteResult object
      * @param oldChildIndex index of deleted child node if any, otherwise null
+     * @param parentNode parentNode of the current node
      * @param found indicates if an entry has been deleted
      */
-    public DeleteResult(Integer oldChildIndex, Node parentNode, boolean found) {
+    public DeleteResult(Integer oldChildIndex, InternalNode parentNode, boolean found) {
         this.oldChildIndex = oldChildIndex;
         this.parentNode = parentNode;
         this.found = found;
@@ -38,7 +39,7 @@ public class DeleteResult {
         return parentNode;
     }
 
-    public void setParentNode(Node parentNode) {
+    public void setParentNode(InternalNode parentNode) {
         this.parentNode = parentNode;
     }
 
