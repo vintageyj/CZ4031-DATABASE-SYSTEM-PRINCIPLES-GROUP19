@@ -170,12 +170,12 @@ public abstract class Node {
             // Find index of pointer to leftmost node that can be inserted with the entry
             int child = curNode.findIndexOfNode(key);
             //TODO: debug and delete
-            System.out.println("Child:" +child);
-            System.out.println("Internal Node:"+curNode);
-            System.out.println(curNode.getDegree());
-            for(int i = 0; i < curNode.getDegree(); i++) {
-                System.out.println(curNode.getPointers()[i]);
-            }
+//            System.out.println("Child:" +child);
+//            System.out.println("Internal Node:"+curNode);
+//            System.out.println(curNode.getDegree());
+//            for(int i = 0; i < curNode.getDegree(); i++) {
+//                System.out.println(curNode.getPointers()[i]);
+//            }
             
             // Insert entry to subtree
             splitChild = curNode.getPointers()[child].insertInternal(key, pointer);
@@ -197,7 +197,7 @@ public abstract class Node {
             LeafNode curNode = (LeafNode) this;
             if (curNode.getDegree() < getN() || curNode.getKeys()[curNode.findIndexToInsert(key)] == key) {
                 //TODO: debug and delete
-                System.out.println(curNode.getDegree());
+                System.out.println("degree of leafnode before insertion: "+curNode.getDegree());
                 // Add entry to leaf node if it is not full or if key is already present
             	curNode.addSorted(key, pointer);
                 // No nodes were split after insertion
@@ -214,14 +214,17 @@ public abstract class Node {
         if (this.isRoot()) {
         	if (split) {
         	    //TODO:debug
-        	    System.out.println("split happened");
+        	    System.out.println("split happened at root");
         		// If root is split, add a new node to be the root
+        	    this.setRoot(false);
                 InternalNode newNode = new InternalNode(true);
                 newNode.addPointer(this, newNode.getDegree());
                 newNode.addPointer(splitChild.getNode(), newNode.getDegree());
                 newNode.addKey(splitChild.getKey(), 0);
                 setParent(newNode);
                 splitChild.getNode().setParent(newNode);
+                //TODO:debug
+                System.out.println("new root created:"+newNode);
                 //TODO: finish debugging and delete this
                 if(getHeight() != splitChild.getNode().getHeight()) {
                 	System.out.println("Height tracking fked up somewhere");
