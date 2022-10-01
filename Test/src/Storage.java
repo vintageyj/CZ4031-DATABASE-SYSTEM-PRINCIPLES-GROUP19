@@ -251,6 +251,10 @@ public class Storage {
             accessedNodes.add(node);
     }
 
+    public void logNodeAccess(RecordNode node) {
+        nodeAccessCount++;
+    }
+
     public void resetLog() {
         blockAccessCount = 0;
         nodeAccessCount = 0;

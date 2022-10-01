@@ -109,6 +109,8 @@ public abstract class Node {
                 // Add to result if current key value is within lower and upper bounds
                 // Finish search if it is higher than the upper bound
                 if (lower <= keys[i] && keys[i] <= upper) {
+                    // Record node access of the linked list node
+                    storage.logNodeAccess(node.getPointers()[i]);
                 	results.addAll(node.getPointers()[i].retrievePointers());
                 } else if (upper < keys[i]) {
                     return results;
@@ -188,7 +190,7 @@ public abstract class Node {
                     splitChild = null;
                 } else {
                     //TODO:debug
-                    System.out.println("split happened at internal node");
+//                    System.out.println("split happened at internal node");
                     // Split node if it is full
                     splitChild = curNode.splitNode(splitChild);
                     split = true;
@@ -197,9 +199,11 @@ public abstract class Node {
         } else if (this instanceof LeafNode) {
             LeafNode curNode = (LeafNode) this;
             //TODO: debug and delete
-            System.out.println("degree of leafnode before insertion: "+curNode.getDegree());
-            System.out.println("key to insert: "+key);
-            System.out.println("node to insert key into:"+curNode);
+            if(getHeight() != 0)
+            System.out.println("This node's height is: "+getHeight());
+//            System.out.println("degree of leafnode before insertion: "+curNode.getDegree());
+//            System.out.println("key to insert: "+key);
+//            System.out.println("node to insert key into:"+curNode);
             if (curNode.getDegree() < getN() || Arrays.stream(curNode.getKeys()).anyMatch(i -> i == key)) {
                 // Add entry to leaf node if it is not full or if key is already present
             	curNode.addSorted(key, pointer);
@@ -207,7 +211,7 @@ public abstract class Node {
             	splitChild = null;
             } else {
                 //TODO:debug
-                System.out.println("split happened at leaf");
+//                System.out.println("split happened at leaf");
                 // Split leaf if it is full
                 splitChild = curNode.splitLeaf(key, pointer);
                 if (splitChild != null) {
@@ -219,24 +223,28 @@ public abstract class Node {
         if (this.isRoot()) {
         	if (split) {
         	    //TODO:debug
-        	    System.out.println("split happened at root");
+//        	    System.out.println("split happened at root");
         		// If root is split, add a new node to be the root
         	    this.setRoot(false);
                 InternalNode newNode = new InternalNode(true);
+                newNode.setHeight(getHeight()+1);
                 newNode.addPointer(this, newNode.getDegree());
                 newNode.addPointer(splitChild.getNode(), newNode.getDegree());
                 newNode.addKey(splitChild.getKey(), 0);
                 setParent(newNode);
                 splitChild.getNode().setParent(newNode);
                 //TODO:debug
-                System.out.println("new root created:"+newNode);
+//                System.out.println("new root created:"+newNode);
                 //TODO: finish debugging and delete this
                 if(getHeight() != splitChild.getNode().getHeight()) {
                 	System.out.println("Height tracking fked up somewhere");
+                	System.out.println("This node: "+this);
+                	System.out.println("This node's height: "+getHeight());
+                	System.out.println("Split node: "+splitChild.getNode());
+                	System.out.println("Split node's height: "+splitChild.getNode().getHeight());
                 }
-                newNode.setHeight(getHeight()+1);
                 //TODO:debug
-                System.out.println("height of new root: "+newNode.getHeight());
+//                System.out.println("height of new root: "+newNode.getHeight());
                 return new KeyNode(0, newNode);
         	} else {
         		// Return the root node to calling method
@@ -259,14 +267,13 @@ public abstract class Node {
             return null;
         }
 
-        // Keep deleting until the key is not found in the B+ tree
+        // Delete until the key is not found in the B+ tree
         DeleteResult result;
-        do {
-            result = root.bPlusDelete(deleteKey, null);
-        } while (result != null && result.isFound());
+        result = root.bPlusDelete(deleteKey, null);
         return result.getParentNode();
     }
 
+    //TODO: count all deletions
     /**
      * Internal implementation of deletion in B+ tree
      * 
@@ -313,7 +320,7 @@ public abstract class Node {
                     oldChildIndex = null;
                 } else {
                     // Find index of pointer to current node in parent
-                    int curNodeIndex = node.findIndexOfPointer();
+                    int curNodeIndex = node.findIndexInParent();
 
                     // Get left and right siblings of current node
                     InternalNode rightSibling = null, leftSibling = null;
@@ -354,7 +361,8 @@ public abstract class Node {
 
                         // Merge right sibling node to current node
                         node.merge(rightSibling);
-                        //TODO: increase total number of deleted nodes
+                        // Increase total number of deleted nodes
+                        storage.logDeletedNodeCount();
                     } else if (leftSibling != null) {
                         // If left sibling does not have extra entries, merge with left sibling
                         // Set current node to be removed
@@ -365,13 +373,13 @@ public abstract class Node {
 
                         // Merge current node to left sibling node
                         leftSibling.merge(node);
-                        //TODO: increase total number of deleted nodes
+                        // Increase total number of deleted nodes
+                        storage.logDeletedNodeCount();
                     }
                 }
             }
 
             // Fix the remaining keys in the node
-            // TODO: might actly be redundant now??
             if (found) {
                 node.fixTree();
             }
@@ -384,8 +392,8 @@ public abstract class Node {
                     temp.setParent(null);
                     node.deleteAll();
 
-                    //TODO: increase total number of deleted nodes
-                    
+                    // Increase total number of deleted nodes
+                    storage.logDeletedNodeCount();
                     return new DeleteResult(null, temp, found);
                 }
                 return new DeleteResult(null, node, found);
@@ -422,7 +430,7 @@ public abstract class Node {
                 parentNode = node.getParent();
 
                 // Find index of pointer to current node in its parent
-                int curNodeIndex = node.findIndexOfPointer();
+                int curNodeIndex = node.findIndexInParent();
 
                 // Get left and right siblings of current node, if any
                 LeafNode rightSibling = null, leftSibling = null;
@@ -456,6 +464,8 @@ public abstract class Node {
 
                     // Modify siblings of nodes
                     node.setRightSibling(rightSibling.getRightSibling());
+                    // Increase total number of deleted nodes
+                    storage.logDeletedNodeCount();
                 } else if (leftSibling != null) {
                     // Merge with left sibling
                     oldChildIndex = curNodeIndex;
@@ -463,6 +473,8 @@ public abstract class Node {
 
                     // Modify siblings of nodes
                     leftSibling.setRightSibling(node.getRightSibling());
+                    // Increase total number of deleted nodes
+                    storage.logDeletedNodeCount();
                 }
             }
 
@@ -470,6 +482,8 @@ public abstract class Node {
             if (node.isRoot()) {
                 // If root only has no children, return null
                 if (node.getDegree() == 0) {
+                    // Increase total number of deleted nodes
+                    storage.logDeletedNodeCount();
                     return new DeleteResult(oldChildIndex, null, found);
                 }
                 return new DeleteResult(oldChildIndex, node, found);
@@ -482,14 +496,12 @@ public abstract class Node {
         return new DeleteResult(oldChildIndex, parentNode, found);
     }
 
-    // TODO: helper functions (mostly done)
-    // TODO: Rename to findIndexInParent
     /**
      * Find index of pointer to node in its parent node
      * 
      * @return index of node
      */
-    public int findIndexOfPointer() {
+    public int findIndexInParent() {
         Node[] pointers = this.getParent().getPointers();
         int i;
         for (i = 0; i < pointers.length; ++i) {
@@ -513,7 +525,7 @@ public abstract class Node {
         if(this instanceof InternalNode) {
             high = this.getDegree() - 2;
             //TODO: debug
-            System.out.println("high is: "+high);
+//            System.out.println("high is: "+high);
         } else {
             high = this.getDegree() - 1;
         }
@@ -566,10 +578,20 @@ public abstract class Node {
      * @return total number of nodes from the subtree (inclusive of root)
      */
     public static int getTotalNodes(Node root) {
-        if (root instanceof LeafNode) {
-            return 1;
-        }
+
         int total = 0;
+        if (root instanceof LeafNode) {
+            LeafNode root1 = (LeafNode) root;
+            // Find total number of linked list nodes
+            for (int i = 0; i < root1.getDegree(); i++) {
+                RecordNode cur = root1.getPointers()[i];
+                while (cur != null) {
+                    total++;
+                    cur = cur.getNext();
+                }
+            }
+            return total + 1;
+        }
         InternalNode root1 = (InternalNode) root;
         for (int i = 0; i < root1.getDegree(); i++) {
             total += getTotalNodes(root1.getPointers()[i]);

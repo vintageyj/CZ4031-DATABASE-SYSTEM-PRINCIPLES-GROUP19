@@ -12,17 +12,12 @@ public class InternalNode extends Node {
     private Node[] pointers;
 
     /**
-     * Storage to keep track of deleted nodes
-     */
-    private Storage storage;
-
-    /**
-     * Construct an empty internal node specified with whether it is a root node
+     * Construct an empty internal node of height 0 specified with whether it is a root node
      * 
      * @param isRoot whether the node is a root node
      */
     public InternalNode(boolean isRoot) {
-        this(0, isRoot, new int[getN()], new Node[getN() + 1], null);
+        this(0, 0, isRoot, new int[getN()], new Node[getN() + 1], null);
     }
 
     /**
@@ -34,8 +29,8 @@ public class InternalNode extends Node {
      * @param keys     array of keys
      * @param pointers array of pointers
      */
-    public InternalNode(int degree, boolean isRoot, int[] keys, Node[] pointers) {
-        this(degree, isRoot, keys, pointers, null);
+    public InternalNode(int height, int degree, boolean isRoot, int[] keys, Node[] pointers) {
+        this(height, degree, isRoot, keys, pointers, null);
     }
 
     /**
@@ -48,8 +43,8 @@ public class InternalNode extends Node {
      * @param pointers array of pointers
      * @param parent   parent node
      */
-    public InternalNode(int degree, boolean isRoot, int[] keys, Node[] pointers, InternalNode parent) {
-        super(0, degree, isRoot, keys, parent);
+    public InternalNode(int height, int degree, boolean isRoot, int[] keys, Node[] pointers, InternalNode parent) {
+        super(height, degree, isRoot, keys, parent);
         this.pointers = pointers;
     }
 
@@ -154,7 +149,7 @@ public class InternalNode extends Node {
         setDegree(firstHalfPointers.length);
 
         // Create a new node to store the split keys and pointers
-        InternalNode newNode = new InternalNode(secondHalfPointers.length, false,
+        InternalNode newNode = new InternalNode(getHeight(), secondHalfPointers.length, false,
                 Arrays.copyOf(secondHalfKeys, keys.length),
                 Arrays.copyOf(secondHalfPointers, pointers.length));
 
@@ -281,11 +276,6 @@ public class InternalNode extends Node {
         Arrays.fill(pointers, null);
         Arrays.fill(getKeys(), 0);
         setDegree(0);
-
-        // Increase number of nodes deleted
-        // Calls the logDeletedNodeCount() in storage to update the count of deleted
-        // nodes
-        storage.logDeletedNodeCount();
     }
 
     public Node[] getPointers() {
@@ -299,6 +289,7 @@ public class InternalNode extends Node {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        sb.append("Internal Node: ");
         sb.append("[");
         for (int i = 0; i < getDegree()-1; i++) {
             sb.append(getKeys()[i]);

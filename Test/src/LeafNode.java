@@ -204,10 +204,16 @@ public class LeafNode extends Node {
     public RecordNode delete(int key) {
         for (int i = 0; i < getDegree(); i++) {
             if (getKeys()[i] == key) {
-            	RecordNode list = pointers[i];
+            	RecordNode temp, list = pointers[i];
             	super.deleteAndShift(i);
                 deleteAndShift(i);
                 setDegree(getDegree()-1);
+                temp = list;
+                // Increase total number of deleted nodes
+                while (temp != null) {
+                    storage.logDeletedNodeCount();
+                    temp = temp.getNext();
+                }
                 return list;
             }
         }
@@ -234,11 +240,6 @@ public class LeafNode extends Node {
         Arrays.fill(pointers, null);
         Arrays.fill(getKeys(), 0);
         setDegree(0);
-
-        // Increase number of nodes deleted
-        // Calls the logDeletedNodeCount() in storage to update the count of deleted
-        // nodes
-        storage.logDeletedNodeCount();
     }
 
     public RecordNode[] getPointers() {
@@ -260,6 +261,7 @@ public class LeafNode extends Node {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        sb.append("Leaf Node: ");
         sb.append("[");
         for (int i = 0; i < getDegree(); i++) {
             sb.append(getKeys()[i]);
