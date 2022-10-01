@@ -66,7 +66,7 @@ public abstract class Node {
         // Since there could be more than one result for a search key, searching for a
         // single key can be done
         // by using range search, with the search key as both the lower and upper bound
-        return searchInternal(null, key, key);
+        return bPlusSearch(null, key, key);
     }
 
     /**
@@ -81,10 +81,9 @@ public abstract class Node {
         // Reset logs for experiment
         storage.resetLog();
 
-        return searchInternal(null, lower, upper);
+        return bPlusSearch(null, lower, upper);
     }
 
-    // TODO: Rename searchInternal to bPlusSearch
     /**
      * Searching in the B+ tree
      * 
@@ -94,7 +93,7 @@ public abstract class Node {
      * @return a list of record addresses with a key value ranging from the lower to
      *         the upper bounds
      */
-    public ArrayList<RecordPointer> searchInternal(ArrayList<RecordPointer> results, int lower, int upper) {
+    public ArrayList<RecordPointer> bPlusSearch(ArrayList<RecordPointer> results, int lower, int upper) {
         if (results == null) {
             results = new ArrayList<RecordPointer>();
         }
@@ -116,7 +115,7 @@ public abstract class Node {
                 }
             }
             // Iterate to right sibling of leaf node
-            node.getRightSibling().searchInternal(results, lower, upper);
+            node.getRightSibling().bPlusSearch(results, lower, upper);
 
         } else if (this instanceof InternalNode) {
             InternalNode node = (InternalNode) this;
@@ -125,7 +124,7 @@ public abstract class Node {
 
             // Traverse to the leftmost subtree possibly containing the lower bound
             int child = node.findIndexOfNode(lower);
-            node.getPointers()[child].searchInternal(results, lower, upper);
+            node.getPointers()[child].bPlusSearch(results, lower, upper);
         }
         return results;
     }
@@ -147,11 +146,10 @@ public abstract class Node {
 
         int key = record.getNumVotes();
         // Insert by traversing the tree from the root node
-        KeyNode newRoot = root.insertInternal(key, pointer);
+        KeyNode newRoot = root.bPlusInsert(key, pointer);
         return newRoot.getNode();
     }
 
-    // TODO: Rename insertInternal to bPlusInsert
     /**
      * Insertion in B+ tree (recursive)
      * 
@@ -162,7 +160,7 @@ public abstract class Node {
      * @return a KeyNode of either the new root or the split child if current node
      *         was split, otherwise null
      */
-    public KeyNode insertInternal(int key, RecordPointer pointer) {
+    public KeyNode bPlusInsert(int key, RecordPointer pointer) {
         KeyNode splitChild = null;
         boolean split = false;
         if (this instanceof InternalNode) {
@@ -179,7 +177,7 @@ public abstract class Node {
 //            }
             
             // Insert entry to subtree
-            splitChild = curNode.getPointers()[child].insertInternal(key, pointer);
+            splitChild = curNode.getPointers()[child].bPlusInsert(key, pointer);
 
             if (splitChild != null) {
                 splitChild.getNode().setParent(curNode);
@@ -264,7 +262,7 @@ public abstract class Node {
         // Keep deleting until the key is not found in the B+ tree
         DeleteResult result;
         do {
-            result = root.deleteInternal(deleteKey, null);
+            result = root.bPlusDelete(deleteKey, null);
         } while (result != null && result.isFound());
         return result.getParentNode();
     }
@@ -278,7 +276,7 @@ public abstract class Node {
      *         traversed node,
      *         and boolean indicating if an entry is deleted
      */
-    public DeleteResult deleteInternal(int key, Integer oldChildIndex) {
+    public DeleteResult bPlusDelete(int key, Integer oldChildIndex) {
         DeleteResult result;
         InternalNode parentNode = this.getParent();
         boolean found = false;
@@ -290,7 +288,7 @@ public abstract class Node {
             int pointerIndex = node.findIndexOfNode(key);
 
             // Recursively delete
-            result = node.getPointers()[pointerIndex].deleteInternal(key, oldChildIndex);
+            result = node.getPointers()[pointerIndex].bPlusDelete(key, oldChildIndex);
 
             // Retrieve index of deleted child node, null if no deletion
             oldChildIndex = result.getOldChildIndex();
@@ -374,9 +372,9 @@ public abstract class Node {
 
             // Fix the remaining keys in the node
             // TODO: might actly be redundant now??
-//            if (found) {
-//                node.fixTree();
-//            }
+            if (found) {
+                node.fixTree();
+            }
 
             // If current node is root, return root
             if (node.isRoot()) {
@@ -624,14 +622,13 @@ public abstract class Node {
         return Node.n;
     }
 
-    // TODO: Figure out actual value of N
     /**
      * Set n parameter of B+ tree from block size
      * 
      * @param blockSize size of block in bytes
      */
     public static void setNFromBlockSize(int blockSize) {
-        Node.n = (blockSize - 2*4-2*4) / (4+4);
+        Node.n = (blockSize - 2*4 - 2*4) / (4+4);
     }
 
     public int getHeight() {
