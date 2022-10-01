@@ -7,7 +7,7 @@ public abstract class Node {
     /**
      * Storage for logging purposes
      */
-    private static Storage storage;
+    protected static Storage storage;
     /**
      * Maximum number of keys that can be held
      */
@@ -169,7 +169,10 @@ public abstract class Node {
 
             // Find index of pointer to leftmost node that can be inserted with the entry
             int child = curNode.findIndexOfNode(key);
-
+            //TODO: debug and delete
+            System.out.println(child);
+            System.out.println(curNode);
+            
             // Insert entry to subtree
             splitChild = curNode.getPointers()[child].insertInternal(key, pointer);
 
@@ -189,6 +192,7 @@ public abstract class Node {
         } else if (this instanceof LeafNode) {
             LeafNode curNode = (LeafNode) this;
             if (curNode.getDegree() < getN() || curNode.getKeys()[curNode.findIndexToInsert(key)] == key) {
+                System.out.println(curNode.getDegree());
                 // Add entry to leaf node if it is not full or if key is already present
             	curNode.addSorted(key, pointer);
                 // No nodes were split after insertion
@@ -485,7 +489,16 @@ public abstract class Node {
      * @return index to insert
      */
     public int findIndexToInsert(int k) {
-        int low = 0, high = keys.length - 1, mid;
+        int low = 0, high, mid;
+        if(this.getDegree() == 0) {
+            return 0;
+        }
+        if(this instanceof InternalNode) {
+            high = this.getDegree() - 2;
+        } else {
+            high = this.getDegree() - 1;
+        }
+
         while (low < high) {
             mid = low + (high - low) / 2;
             if (k == keys[mid]) {
@@ -597,7 +610,7 @@ public abstract class Node {
      * @param blockSize size of block in bytes
      */
     public static void setNFromBlockSize(int blockSize) {
-        Node.n = (blockSize - 4) / 18;
+        Node.n = (blockSize - 2*4-2*4) / (4+4);
     }
 
     public int getHeight() {

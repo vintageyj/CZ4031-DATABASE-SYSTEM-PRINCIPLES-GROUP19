@@ -22,6 +22,8 @@ public class Main implements Constants {
             // MB + " MB (" + st.getNumBlocksUsed() * blockSize + " bytes)");
 
             // Experiment 2
+            Node.setNFromBlockSize(blockSize);
+            RecordNode.setMaxSizeFromBlockSize(blockSize);
             st.buildIndex();
             System.out.println("\n\nEXPERIMENT 2");
             System.out.println("Parameter n of B+ tree: " + Node.getN());

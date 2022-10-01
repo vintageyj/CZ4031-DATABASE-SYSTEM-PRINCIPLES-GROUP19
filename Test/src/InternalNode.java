@@ -178,12 +178,12 @@ public class InternalNode extends Node {
      * @return index of child node
      */
     public int findIndexOfNode(int key) {
-        for (int i = 0; i < getKeys().length; i++) {
+        for (int i = 0; i < getDegree()-2; i++) {
             if (key < getKeys()[i]) {
                 return i;
             }
         }
-        return getKeys().length;
+        return getDegree()-1;
     }
 
     /**

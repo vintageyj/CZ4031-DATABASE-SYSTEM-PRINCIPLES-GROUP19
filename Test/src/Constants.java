@@ -1,6 +1,6 @@
 public interface Constants {
     // Disk Storage Configurations
-    int MEMORY_SIZE = 500 << 6; // was 100 << 20
+    int MEMORY_SIZE = 100 << 20; // was 100 << 20
     int RECORD_SIZE = 19;
 
     // Set 1 Experiments Configuration

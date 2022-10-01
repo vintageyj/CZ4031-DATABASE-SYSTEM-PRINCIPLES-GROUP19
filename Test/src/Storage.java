@@ -82,7 +82,7 @@ public class Storage {
                 Record record = block.readRecord(recordID);
                 if (!record.isEmpty()) {
                     RecordPointer recordPointer = new RecordPointer(blockID, recordID);
-                    bPlusTree = bPlusTree.insert(bPlusTree, record, recordPointer);
+                    bPlusTree = Node.insert(bPlusTree, record, recordPointer);
                 }
             }
         }
@@ -216,7 +216,7 @@ public class Storage {
      * @param deleteKey
      */
     public void deleteBPT(Node root, int deleteKey) {
-        bPlusTree.delete(root,deleteKey);
+        Node.delete(root, deleteKey);
     }
 
     public int getNumBlocksUsed() {

@@ -17,11 +17,6 @@ public class LeafNode extends Node {
     private LeafNode rightSibling;
 
     /**
-     * Storage to keep track of deleted nodes
-     */
-    private Storage storage;
-
-    /**
      * Construct an empty leaf node specified with whether it is a root node
      * 
      * @param isRoot whether the node is a root node
@@ -165,7 +160,9 @@ public class LeafNode extends Node {
      */
     public void addSorted(int key, RecordPointer pointer) {
         int index = findIndexToInsert(key);
-        if(getKeys()[index] == key) {
+        //TODO: debug and delete
+        //System.out.println(index);
+        if(index < getN() && getKeys()[index] == key) {
         	// Insert into the already existing linked list
         	getPointers()[index] = getPointers()[index].addPointer(pointer);
         } else {

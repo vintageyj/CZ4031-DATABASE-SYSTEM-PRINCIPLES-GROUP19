@@ -98,7 +98,7 @@ public class RecordNode {
      * @param blockSize size of block in bytes
      */
     public static void setMaxSizeFromBlockSize(int blockSize) {
-    	RecordNode.maxSize = (blockSize-2)/12;
+    	RecordNode.maxSize = (blockSize-2*4)/4;
     }
     
     public int getSize() {
