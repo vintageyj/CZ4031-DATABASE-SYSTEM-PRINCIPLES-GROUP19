@@ -6,22 +6,22 @@ public class Record {
     /**
      * Empty flag
      */
-    private boolean empty;
+    private boolean empty; //1bit
 
     /**
      * tconst attribute
      */
-    private char[] tconst;
+    private char[] tconst; //2*x
 
     /**
      * Average rating attribute
      */
-    private float averageRating;
+    private float averageRating; //4
 
     /**
      * Number of votes attribute
      */
-    private int numVotes;
+    private int numVotes; //4
 
     /**
      * Construct an empty record
