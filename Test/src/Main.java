@@ -42,7 +42,7 @@ public class Main implements Constants {
             System.out.print(st.getBlockLog());
             double avgOfAvgRatingExpt3 = 0.0;
             for (Record r : recordsExpt3) {
-                avgOfAvgRatingExpt3 += r.getAvgRating();
+                avgOfAvgRatingExpt3 += r.getaverageRating();
             }
             avgOfAvgRatingExpt3 /= recordsExpt3.size();
             System.out.println("Average of averageRatings returned: " + avgOfAvgRatingExpt3);
@@ -58,7 +58,7 @@ public class Main implements Constants {
             System.out.print(st.getBlockLog());
             double avgOfAvgRatingExpt4 = 0.0;
             for (Record r : recordsExpt4) {
-                avgOfAvgRatingExpt4 += r.getAvgRating();
+                avgOfAvgRatingExpt4 += r.getaverageRating();
             }
             avgOfAvgRatingExpt4 /= recordsExpt4.size();
             System.out.println("Average of averageRatings returned: " + avgOfAvgRatingExpt4);

@@ -143,7 +143,7 @@ public class Storage {
      */
     public void createBlock() {
         blockTail++;
-        Block block = Block.empty(BLOCK_SIZE, RECORD_SIZE);
+        Block block = new Block(BLOCK_SIZE, RECORD_SIZE);
         updateBlock(blockTail, block.toByteArray());
         for (int recordID = 0; recordID < NUM_OF_RECORD; ++recordID) {
             buffer.add(new RecordPointer(blockTail, recordID));

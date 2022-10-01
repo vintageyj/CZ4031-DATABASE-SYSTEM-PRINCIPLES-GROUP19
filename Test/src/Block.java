@@ -22,10 +22,13 @@ public class Block {
      * @param records array of records
      * @param blockSize block size
      */
+
+     /* 
     public Block(Record[] records, int blockSize) {
         this.records = records;
         this.blockSize = blockSize;
     }
+    */
 
     /**
      * Construct an empty block
@@ -33,12 +36,14 @@ public class Block {
      * @param recordSize size of one record
      * @return empty block object
      */
-    public static Block empty(int blockSize, int recordSize) {
+    public Block (int blockSize, int recordSize) {
         Record[] records = new Record[blockSize/recordSize];
         for (int i = 0; i < records.length; ++i) {
             records[i] = new Record();
         }
-        return new Block(records, blockSize);
+        this.records = records;
+        this.blockSize = blockSize;
+        //return new Block(records, blockSize);
     }
 
     /**
@@ -49,7 +54,7 @@ public class Block {
      */
     public static Block fromByteArray(byte[] byteArr, int recordSize) {
         ByteBuffer buf = ByteBuffer.wrap(byteArr);
-        Block block = Block.empty(byteArr.length, recordSize);
+        Block block = new Block(byteArr.length, recordSize);
 
         for (int i = 0; i < block.records.length; ++i) {
             boolean empty = buf.get() == 1;
