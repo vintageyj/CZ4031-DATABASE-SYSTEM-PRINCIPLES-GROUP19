@@ -77,7 +77,7 @@ public class Block {
         for (Record record : records) {
             buf.put(record.isEmpty() ? (byte) 1 : (byte) 0);
             buf.put(new String(record.getTconst()).getBytes(StandardCharsets.US_ASCII));
-            buf.putFloat(record.getAvgRating());
+            buf.putFloat(record.getaverageRating());
             buf.putInt(record.getNumVotes());
         }
         return buf.array();
@@ -127,10 +127,10 @@ public class Block {
      * @param numVotes number of votes attribute
      * @param empty empty flag
      */
-    public void updateRecord(int recordId, char[] tconst, float avgRating, int numVotes, boolean empty) {
+    public void updateRecord(int recordId, char[] tconst, float averageRating, int numVotes, boolean empty) {
         records[recordId].setEmpty(empty);
         records[recordId].setTconst(tconst);
-        records[recordId].setAvgRating(avgRating);
+        records[recordId].setaverageRating(averageRating);
         records[recordId].setNumVotes(numVotes);
     }
 

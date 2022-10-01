@@ -16,7 +16,7 @@ public class Record {
     /**
      * Average rating attribute
      */
-    private float avgRating;
+    private float averageRating;
 
     /**
      * Number of votes attribute
@@ -57,12 +57,12 @@ public class Record {
         this.tconst = tconst;
     }
 
-    public float getAvgRating() {
-        return avgRating;
+    public float getaverageRating() {
+        return averageRating;
     }
 
-    public void setAvgRating(float avgRating) {
-        this.avgRating = avgRating;
+    public void setaverageRating(float averageRating) {
+        this.averageRating = averageRating;
     }
 
     public int getNumVotes() {
