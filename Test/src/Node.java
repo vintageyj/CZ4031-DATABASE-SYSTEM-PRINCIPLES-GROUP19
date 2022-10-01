@@ -51,8 +51,7 @@ public abstract class Node {
         this.parent = parent;
     }
 
-    // TODO: do we want to refactor the storage for logging purposes? and how will
-    // we do it
+    // TODO: how will we refactor storage for logging purposes?
     /**
      * Search for records with the specified value
      * 
@@ -229,12 +228,14 @@ public abstract class Node {
     /**
      * Delete all entries having the specified key as its primary key
      * 
+     * @param root root node of the B+ tree
      * @param deleteKey key to delete
+     * @return root node of the tree
      */
-    public static void delete(Node root, int deleteKey) {
+    public static Node delete(Node root, int deleteKey) {
         // Initialize total number of nodes deleted for experiment
         if (root == null) {
-            return;
+            return null;
         }
 
         // Keep deleting until the key is not found in the B+ tree
@@ -242,19 +243,19 @@ public abstract class Node {
         do {
             result = root.deleteInternal(deleteKey, null);
         } while (result != null && result.isFound());
+        return result.getParentNode();
     }
 
     /**
      * Internal implementation of deletion in B+ tree
      * 
-     * @param curNode       current node
-     * @param deleteKey     key to delete
+     * @param key           key to delete
      * @param oldChildIndex index of deleted child node if any, otherwise null
      * @return result object consisting of index of deleted child node, parent of
      *         traversed node,
      *         and boolean indicating if an entry is deleted
      */
-    public DeleteResult deleteInternal(int deleteKey, Integer oldChildIndex) {
+    public DeleteResult deleteInternal(int key, Integer oldChildIndex) {
         DeleteResult result;
         InternalNode parentNode = this.getParent();
         boolean found = false;
@@ -263,26 +264,31 @@ public abstract class Node {
             InternalNode node = (InternalNode) this;
 
             // Find pointer to node possibly containing key to delete
-            int pointerIndex = node.findIndexOfNode(deleteKey);
+            int pointerIndex = node.findIndexOfNode(key);
 
             // Recursively delete
-            result = deleteInternal(node.getPointers()[pointerIndex], deleteKey, oldChildIndex);
+            result = node.getPointers()[pointerIndex].deleteInternal(key, oldChildIndex);
 
             // Retrieve index of deleted child node, null if no deletion
             oldChildIndex = result.getOldChildIndex();
 
             // Set current node since parent of traversed nodes in the lower level may be
             // different after recursion
-            node = result.getParentNode();
+            //TODO: remove after debugging
+            if (node != result.getParentNode()) {
+                System.out.println("parent changed, figure out why");
+            }
+            node = (InternalNode) result.getParentNode();
             found = result.isFound();
+
+            parentNode = node.getParent();
 
             if (found && oldChildIndex != null) {
                 // Delete key and pointer to deleted child node
                 node.deleteKey(oldChildIndex - 1);
                 node.deletePointer(oldChildIndex);
-                parentNode = node.getParent();
 
-                if (node.getDegree() >= minDegreeInternal || node == root) {
+                if (node.getDegree() >= (int) Math.floor(getN()/2.0)+1 || node.isRoot()) {
                     oldChildIndex = null;
                 } else {
                     // Find index of pointer to current node in parent
@@ -293,27 +299,27 @@ public abstract class Node {
                     if (curNodeIndex > 0) {
                         leftSibling = (InternalNode) parentNode.getPointers()[curNodeIndex - 1];
                     }
-                    if (curNodeIndex < maxDegreeInternal - 1) {
+                    if (curNodeIndex < getN()) {
                         rightSibling = (InternalNode) parentNode.getPointers()[curNodeIndex + 1];
                     }
 
-                    if (rightSibling != null && rightSibling.getDegree() > minDegreeInternal) {
+                    if (rightSibling != null && rightSibling.getDegree() > (int) Math.floor(getN()/2.0)+1) {
                         // If right sibling has extra entries, borrow from right sibling
                         // Move first key and pointer of right sibling to current node
-                        moveEntryToLeftInternalNode(node, rightSibling);
+                        node.moveEntryFromRightInternalNode(rightSibling);
 
-                        // Swap moved key value with parent key value
-                        Key temp = node.getKeys()[node.getDegree() - 2];
+                        // Swap moved key value with parent key value (first key of right sibling is larger than any value currently in node)
+                        int temp = node.getKeys()[node.getDegree() - 2];
                         node.getKeys()[node.getDegree() - 2] = parentNode.getKeys()[curNodeIndex];
                         parentNode.getKeys()[curNodeIndex] = temp;
                         oldChildIndex = null;
-                    } else if (leftSibling != null && leftSibling.getDegree() > minDegreeInternal) {
+                    } else if (leftSibling != null && leftSibling.getDegree() > (int) Math.floor(getN()/2.0)+1) {
                         // If left sibling has extra entries, borrow from left sibling
                         // Move last key and pointer of left sibling to current node
-                        moveEntryToRightInternalNode(leftSibling, node);
+                        node.moveEntryFromLeftInternalNode(leftSibling);
 
-                        // Swap moved key value with parent key value
-                        Key temp = node.getKeys()[0];
+                        // Swap moved key value with parent key value (last key of left sibling is the smallest value currently in node)
+                        int temp = node.getKeys()[0];
                         node.getKeys()[0] = parentNode.getKeys()[curNodeIndex - 1];
                         parentNode.getKeys()[curNodeIndex - 1] = temp;
                         oldChildIndex = null;
@@ -326,7 +332,8 @@ public abstract class Node {
                         node.addKey(parentNode.getKeys()[curNodeIndex], node.getDegree() - 1);
 
                         // Merge right sibling node to current node
-                        merge(rightSibling, node);
+                        node.merge(rightSibling);
+                        //TODO: increase total number of deleted nodes
                     } else if (leftSibling != null) {
                         // If left sibling does not have extra entries, merge with left sibling
                         // Set current node to be removed
@@ -336,23 +343,31 @@ public abstract class Node {
                         leftSibling.addKey(parentNode.getKeys()[curNodeIndex - 1], leftSibling.getDegree() - 1);
 
                         // Merge current node to left sibling node
-                        merge(node, leftSibling);
+                        leftSibling.merge(node);
+                        //TODO: increase total number of deleted nodes
                     }
                 }
             }
 
-            // If current node is root, and it only has 1 child, make child node the new
-            // root
-            if (root == node && root.getDegree() == 1) {
-                InternalNode temp = (InternalNode) root;
-                root = ((InternalNode) root).getPointers()[0];
-                root.setParent(null);
-                temp.deleteAll();
+            // Fix the remaining keys in the node
+            // TODO: might actly be redundant now??
+            if (found) {
+                node.fixTree();
+            }
 
-                // Decrease height of tree and number of nodes, increase total number of deleted
-                // nodes
-                --height;
-                --totalNodes;
+            // If current node is root, return root
+            if (node.isRoot()) {
+                // If root only has 1 child, make child node the new root
+                if (node.getDegree() == 1) {
+                    InternalNode temp = (InternalNode) node.getPointers()[0];
+                    temp.setParent(null);
+                    node.deleteAll();
+
+                    //TODO: increase total number of deleted nodes
+                    
+                    return new DeleteResult(null, temp, found);
+                }
+                return new DeleteResult(null, node, found);
             }
 
         } else if (this instanceof LeafNode) {
@@ -361,18 +376,17 @@ public abstract class Node {
             // Traverse leaf nodes to search for key to delete, since it is possible that
             // the current node
             // does not contain the key
-            KeyValuePair deletedEntry = node.delete(deleteKey);
-            while (deletedEntry == null && node != null && node.getDegree() > 0
-                    && deleteKey >= node.getKvPairs()[node.getDegree() - 1].getKey().getK1()) {
+            RecordNode deletedEntry = node.delete(key);
+            while (deletedEntry == null && node != null && node.getDegree() > 0 && key >= node.getKeys()[node.getDegree() - 1]) {
                 node = node.getRightSibling();
                 if (node != null)
-                    deletedEntry = node.delete(deleteKey);
+                    deletedEntry = node.delete(key);
             }
 
             // Delete entry in storage
             if (deletedEntry != null) {
                 found = true;
-                st.deleteRecord(deletedEntry.getRecordAddress());
+                storage.deleteRecord(deletedEntry.getRecordAddress());
             }
 
             if (found && node.getDegree() < minKeysLeaf && node != root) {
@@ -436,42 +450,6 @@ public abstract class Node {
         // current node,
         // and a boolean indicating whether an entry is deleted
         return new DeleteResult(oldChildIndex, parentNode, found);
-    }
-
-    /**
-     * Move the leftmost key and pointer of right internal node to left internal
-     * node
-     * 
-     * @param left  left internal node (destination)
-     * @param right right internal node (source)
-     */
-    public void moveEntryToLeftInternalNode(InternalNode left, InternalNode right) {
-        // Delete the first key and pointer of the node on the right
-        int key = right.deleteKey(0);
-        Node pointer = right.deletePointer(0);
-
-        // Add the key and pointer to the back of the node on the left
-        left.addKey(key, left.getDegree() - 1);
-        left.addPointer(pointer, left.getDegree());
-        pointer.setParent(left);
-    }
-
-    /**
-     * Move the rightmost key and pointer of left internal node to right internal
-     * node
-     * 
-     * @param left  left internal node (source)
-     * @param right right internal node (destination)
-     */
-    public void moveEntryToRightInternalNode(InternalNode left, InternalNode right) {
-        // Delete the last key and pointer of the node on the left
-        int key = left.deleteKey(left.getDegree() - 2);
-        Node pointer = left.deletePointer(left.getDegree() - 1);
-
-        // Add the key and pointer to the start of the node on the right
-        right.addKey(key, 0);
-        right.addPointer(pointer, 0);
-        pointer.setParent(right);
     }
 
     // TODO: helper functions (mostly done)
@@ -546,32 +524,24 @@ public abstract class Node {
      * Recursively find the total number of nodes in a B+ tree
      * 
      * @param root  root node of the current subtree
-     * @param index position of the child node in the entire tree (0 for root and
-     *              all of the subsequent leftmost child nodes)
      * @return total number of nodes from the subtree (inclusive of root)
      */
-    public static int getTotalNodes(Node root, int index) {
+    public static int getTotalNodes(Node root) {
         if (root instanceof LeafNode) {
-            return 0;
+            return 1;
         }
         int total = 0;
         InternalNode root1 = (InternalNode) root;
         for (int i = 0; i < root1.getDegree(); i++) {
-            total += getTotalNodes(root1.getPointers()[i], i + index);
-        }
-
-        // If this is the leftmost internal node with a height of 1, we need to iterate
-        // through the leaf nodes to count them all
-        if (total == 0 && index == 0) {
-            LeafNode temp = (LeafNode) root1.getPointers()[0];
-            while (temp != null) {
-                total++;
-                temp = temp.getRightSibling();
-            }
+            total += getTotalNodes(root1.getPointers()[i]);
         }
         return total + 1;
     }
 
+    //TODO: is this redundant now???
+    /**
+     * Fix the keys in the current internal node
+     */
     public void fixTree() {
         if (this == null || this instanceof LeafNode) {
             return;
@@ -581,12 +551,15 @@ public abstract class Node {
             for (int i = 1; i < internalNode.getDegree(); i++) { // Skip the first pointer
                 Node rightNode = internalNode.getPointers()[i];
                 replaceKey(internalNode.getKeys()[i - 1], rightNode.getLowestKey());
-                rightNode.fixTree();
             }
         }
     }
 
-    // Pass in internal, non-root nodes
+    //TODO: is this redundant now???
+    /**
+     * Find the smallest key in the subtree rooted at the node
+     * @return smallest key in the subtree, or -1 if error occurs
+     */
     public int getLowestKey() {
         if (this instanceof LeafNode) {
             LeafNode leafNode = (LeafNode) this;

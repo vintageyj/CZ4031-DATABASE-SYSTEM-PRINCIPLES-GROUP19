@@ -92,6 +92,7 @@ public class RecordNode {
     	return RecordNode.maxSize;
     }
 
+    // TODO: set formula
     /**
      * Set maximum number of record pointers that can be stored in linked list node from block size
      * @param blockSize size of block in bytes

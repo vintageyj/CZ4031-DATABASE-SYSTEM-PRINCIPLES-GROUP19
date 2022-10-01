@@ -1,5 +1,5 @@
 /**
- * Class representing a pair of key and pointer to node (wrapper class for returning values)
+ * Class representing a pair of key and pointer to node (wrapper class for returning values in insertion)
  */
 public class KeyNode {
 
