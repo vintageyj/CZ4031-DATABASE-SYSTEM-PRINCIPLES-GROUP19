@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Interface representing a node in a B+ tree
@@ -188,6 +189,8 @@ public abstract class Node {
                     // No nodes were split after insertion
                     splitChild = null;
                 } else {
+                    //TODO:debug
+                    System.out.println("split happened at internal node");
                     // Split node if it is full
                     splitChild = curNode.splitNode(splitChild);
                     split = true;
@@ -195,14 +198,18 @@ public abstract class Node {
             }
         } else if (this instanceof LeafNode) {
             LeafNode curNode = (LeafNode) this;
-            if (curNode.getDegree() < getN() || curNode.getKeys()[curNode.findIndexToInsert(key)] == key) {
-                //TODO: debug and delete
-                System.out.println("degree of leafnode before insertion: "+curNode.getDegree());
+            //TODO: debug and delete
+            System.out.println("degree of leafnode before insertion: "+curNode.getDegree());
+            System.out.println("key to insert: "+key);
+            System.out.println("node to insert key into:"+curNode);
+            if (curNode.getDegree() < getN() || Arrays.stream(curNode.getKeys()).anyMatch(i -> i == key)) {
                 // Add entry to leaf node if it is not full or if key is already present
             	curNode.addSorted(key, pointer);
                 // No nodes were split after insertion
             	splitChild = null;
             } else {
+                //TODO:debug
+                System.out.println("split happened at leaf");
                 // Split leaf if it is full
                 splitChild = curNode.splitLeaf(key, pointer);
                 if (splitChild != null) {
@@ -507,6 +514,8 @@ public abstract class Node {
         }
         if(this instanceof InternalNode) {
             high = this.getDegree() - 2;
+            //TODO: debug
+            System.out.println("high is: "+high);
         } else {
             high = this.getDegree() - 1;
         }

@@ -265,7 +265,11 @@ public class LeafNode extends Node {
             sb.append(getKeys()[i]);
             sb.append(", ");
         }
-        sb.replace(sb.length() - 2, sb.length() - 1, "]");
+        if (sb.length() > 2) {
+            sb.replace(sb.length() - 2, sb.length() - 1, "]");
+        } else {
+            sb.append("]");
+        }
         return sb.toString();
     }
 }
