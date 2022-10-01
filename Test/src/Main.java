@@ -22,6 +22,7 @@ public class Main implements Constants {
             // MB + " MB (" + st.getNumBlocksUsed() * blockSize + " bytes)");
 
             // Experiment 2
+            Node.setStorage(st);
             Node.setNFromBlockSize(blockSize);
             RecordNode.setMaxSizeFromBlockSize(blockSize);
             st.buildIndex();
