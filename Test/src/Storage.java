@@ -261,11 +261,11 @@ public class Storage {
 
     public String getBlockLog() {
         StringBuilder sb = new StringBuilder();
-        for (int i = 1; i <= accessedBlocks.size(); i++) {
+        for (int i = 0; i < accessedBlocks.size(); i++) {
             RecordPointer recordPointer = accessedBlocks.get(i);
             byte[] byteArray = readBlock(recordPointer.getBlockID());
             Block block = Block.fromByteArray(byteArray, getRecordSize());
-            sb.append(String.format("%d. ", i));
+            sb.append(String.format("%d. ", i+1));
             sb.append(block);
             sb.append("\n");
         }
@@ -274,9 +274,9 @@ public class Storage {
 
     public String getNodeLog() {
         StringBuilder sb = new StringBuilder();
-        for (int i = 1; i <= accessedNodes.size(); i++) {
+        for (int i = 0; i < accessedNodes.size(); i++) {
             Node node = accessedNodes.get(i);
-            sb.append(String.format("%d. ", i));
+            sb.append(String.format("%d. ", i+1));
             sb.append(node);
             sb.append("\n");
         }
