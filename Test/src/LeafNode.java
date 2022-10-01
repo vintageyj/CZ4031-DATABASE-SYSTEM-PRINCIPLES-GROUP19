@@ -177,6 +177,29 @@ public class LeafNode extends Node {
     }
 
     /**
+     * Insert new linked list to leaf node while keeping the keys and linked lists sorted
+     * 
+     * @param key     key to be inserted
+     * @param pointer linked list to be inserted
+     */
+    public void addKey(int key, RecordNode pointer) {
+        int index = findIndexToInsert(key);
+        if(getKeys()[index] == key) {
+            //TODO: debug and delete
+            System.out.println("error in deletion in leafnode");
+        } else {
+            // Insert the new linked list
+            insertAndShift(key, index);
+            RecordNode[] pointers = this.getPointers();
+            for (int i = pointers.length - 1; i > index; i--) {
+                pointers[i] = pointers[i - 1];
+            }
+            pointers[index] = pointer;
+            setDegree(getDegree()+1);
+        }
+    }
+
+    /**
      * Delete records that match the key value
      * @param key key to delete
      * @return the deleted records' linked list if found, otherwise null

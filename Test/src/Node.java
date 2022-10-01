@@ -292,7 +292,7 @@ public abstract class Node {
                     oldChildIndex = null;
                 } else {
                     // Find index of pointer to current node in parent
-                    int curNodeIndex = findIndexOfPointer(parentNode, node);
+                    int curNodeIndex = node.findIndexOfPointer();
 
                     // Get left and right siblings of current node
                     InternalNode rightSibling = null, leftSibling = null;
@@ -386,16 +386,22 @@ public abstract class Node {
             // Delete entry in storage
             if (deletedEntry != null) {
                 found = true;
-                storage.deleteRecord(deletedEntry.getRecordAddress());
+                while(deletedEntry != null) {
+                    for (int i = 0; i < deletedEntry.getSize(); i++) {
+                        storage.deleteRecord(deletedEntry.getPointers()[i]);
+                    }
+                    deletedEntry = deletedEntry.getNext();
+                }
+                
             }
 
-            if (found && node.getDegree() < minKeysLeaf && node != root) {
+            if (found && node.getDegree() < (int) Math.floor((getN()+1)/2.0) && !node.isRoot()) {
                 // Set parent node since current node may have a different parent after
                 // traversing leaf nodes
                 parentNode = node.getParent();
 
                 // Find index of pointer to current node in its parent
-                int curNodeIndex = findIndexOfPointer(parentNode, node);
+                int curNodeIndex = node.findIndexOfPointer();
 
                 // Get left and right siblings of current node, if any
                 LeafNode rightSibling = null, leftSibling = null;
@@ -403,46 +409,49 @@ public abstract class Node {
                     rightSibling = node.getRightSibling();
                 }
                 if (curNodeIndex > 0) {
-                    leftSibling = node.getLeftSibling();
+                    leftSibling = (LeafNode) parentNode.getPointers()[curNodeIndex-1];
                 }
 
-                if (rightSibling != null && rightSibling.getDegree() > minKeysLeaf) {
+                if (rightSibling != null && rightSibling.getDegree() > (int) Math.floor((getN()+1)/2.0)) {
                     // Borrow from right sibling
-                    KeyValuePair entry = rightSibling.deleteByIndex(0);
-                    node.addSorted(entry);
+                    int borrowedKey = rightSibling.getKeys()[0];
+                    RecordNode entry = rightSibling.deleteByIndex(0);
+                    node.addKey(borrowedKey, entry);
 
                     // Set leftmost key of right sibling to be key value of parent
-                    parentNode.getKeys()[curNodeIndex] = rightSibling.getKvPairs()[0].getKey();
-                } else if (leftSibling != null && leftSibling.getDegree() > minKeysLeaf) {
+                    parentNode.getKeys()[curNodeIndex] = rightSibling.getKeys()[0];
+                } else if (leftSibling != null && leftSibling.getDegree() > (int) Math.floor((getN()+1)/2.0)) {
                     // Borrow from left sibling
-                    KeyValuePair entry = leftSibling.deleteByIndex(leftSibling.getDegree() - 1);
-                    node.addSorted(entry);
+                    int borrowedKey = leftSibling.getKeys()[0];
+                    RecordNode entry = leftSibling.deleteByIndex(leftSibling.getDegree() - 1);
+                    node.addKey(borrowedKey, entry);
 
                     // Set rightmost key of current node to be key value of parent
-                    parentNode.getKeys()[curNodeIndex - 1] = node.getKvPairs()[0].getKey();
+                    parentNode.getKeys()[curNodeIndex - 1] = node.getKeys()[0];
                 } else if (rightSibling != null) {
                     // Merge with right sibling
                     oldChildIndex = curNodeIndex + 1;
-                    merge(rightSibling, node);
+                    node.merge(rightSibling);
 
                     // Modify siblings of nodes
                     node.setRightSibling(rightSibling.getRightSibling());
-                    if (node.getRightSibling() != null)
-                        node.getRightSibling().setLeftSibling(node);
                 } else if (leftSibling != null) {
                     // Merge with left sibling
                     oldChildIndex = curNodeIndex;
-                    merge(node, leftSibling);
+                    leftSibling.merge(node);
 
                     // Modify siblings of nodes
                     leftSibling.setRightSibling(node.getRightSibling());
-                    if (leftSibling.getRightSibling() != null)
-                        leftSibling.getRightSibling().setLeftSibling(leftSibling);
                 }
             }
 
-            if (node == root && root.getDegree() == 0) {
-                root = null;
+            // If current node is root, return root
+            if (node.isRoot()) {
+                // If root only has no children, return null
+                if (node.getDegree() == 0) {
+                    return new DeleteResult(oldChildIndex, null, found);
+                }
+                return new DeleteResult(oldChildIndex, node, found);
             }
         }
 
@@ -457,15 +466,13 @@ public abstract class Node {
     /**
      * Find index of pointer to node in its parent node
      * 
-     * @param parentNode parent of node
-     * @param node       node
      * @return index of node
      */
-    public int findIndexOfPointer(InternalNode parentNode, Node node) {
-        Node[] pointers = parentNode.getPointers();
+    public int findIndexOfPointer() {
+        Node[] pointers = this.getParent().getPointers();
         int i;
         for (i = 0; i < pointers.length; ++i) {
-            if (pointers[i] == node)
+            if (pointers[i] == this)
                 break;
         }
         return i;
