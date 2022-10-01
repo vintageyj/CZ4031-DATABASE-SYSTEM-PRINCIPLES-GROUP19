@@ -60,6 +60,6 @@ public class Util {
      * @return n parameter of B+ tree
      */
     public static int getNFromBlockSize(int blockSize) {
-        return (blockSize - 4) / 18;
+        return (blockSize - 4) / 28;
     }
 }

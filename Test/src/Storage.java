@@ -18,7 +18,7 @@ public class Storage {
     private LinkedList<RecordPointer> buffer; // changed emptyRecord to buffer? Buffer to store the list of available
                                               // spaces to be populated by KeyPointers
 
-    private BPlusTree bPlusTree;
+    private Node bPlusTree;
 
     // Logging Components
     private List<RecordPointer> accessedBlocks;
@@ -73,7 +73,7 @@ public class Storage {
      * Build B+ tree on database by inserting the records from database sequentially
      */
     public void buildIndex() {
-        bPlusTree = new BPlusTree(Util.getNFromBlockSize(BLOCK_SIZE), this);
+//        bPlusTree = new Node(Util.getNFromBlockSize(BLOCK_SIZE), this);
         // Iterates through data blocks
         for (int blockID = 0; blockID <= blockTail; ++blockID) {
             Block block = Block.fromByteArray(readBlock(blockID), RECORD_SIZE);
@@ -81,7 +81,8 @@ public class Storage {
             for (int recordID = 0; recordID < NUM_OF_RECORD; ++recordID) {
                 Record record = block.readRecord(recordID);
                 if (!record.isEmpty()) {
-                    bPlusTree.insert(record, new RecordPointer(blockID, recordID));
+                    RecordPointer recordPointer = new RecordPointer(blockID, recordID);
+                    bPlusTree = bPlusTree.insert(bPlusTree, record, recordPointer);
                 }
             }
         }
@@ -173,7 +174,7 @@ public class Storage {
         return Arrays.copyOfRange(blocks, baseAddress, offset);
     }
 
-    public BPlusTree getBPT() {
+    public Node getBPT() {
         return bPlusTree;
     }
 
@@ -214,8 +215,8 @@ public class Storage {
      * 
      * @param deleteKey
      */
-    public void deleteBPT(int deleteKey) {
-        bPlusTree.delete(deleteKey);
+    public void deleteBPT(Node root, int deleteKey) {
+        bPlusTree.delete(root,deleteKey);
     }
 
     public int getNumBlocksUsed() {
