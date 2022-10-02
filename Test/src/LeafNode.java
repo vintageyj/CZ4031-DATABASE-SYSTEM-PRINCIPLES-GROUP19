@@ -22,7 +22,7 @@ public class LeafNode extends Node {
      * @param isRoot whether the node is a root node
      */
     public LeafNode(boolean isRoot) {
-        this(0, isRoot, new int [getN()], new RecordNode [getN()], null, null);
+        this(0, isRoot, new int[getN()], new RecordNode[getN()], null, null);
     }
 
     /**
@@ -50,8 +50,9 @@ public class LeafNode extends Node {
      * @param parent       parent node
      * @param rightSibling right sibling node
      */
-    public LeafNode(int degree, boolean isRoot, int[] keys, RecordNode[] pointers, InternalNode parent, LeafNode rightSibling) {
-    	super(0, degree, isRoot, keys, parent);
+    public LeafNode(int degree, boolean isRoot, int[] keys, RecordNode[] pointers, InternalNode parent,
+            LeafNode rightSibling) {
+        super(0, degree, isRoot, keys, parent);
         this.pointers = pointers;
         this.rightSibling = rightSibling;
     }
@@ -100,8 +101,8 @@ public class LeafNode extends Node {
         insertAndShift(entry, indexToInsert);
 
         // Find point to split node
-        int mid = (int) Math.floor((getN()+1)/2.0);
-       
+        int mid = (int) Math.floor((getN() + 1) / 2.0);
+
         // Split key and pointer arrays into half
         int[] firstHalfKeys = Arrays.copyOfRange(getKeys(), 0, mid);
         RecordNode[] firstHalfPointers = Arrays.copyOfRange(getPointers(), 0, mid);
@@ -115,7 +116,7 @@ public class LeafNode extends Node {
 
         // Create a new node to store the split key-value pairs
         LeafNode newLeaf = new LeafNode(secondHalfPointers.length, false, Arrays.copyOf(secondHalfKeys, keys.length),
-        		Arrays.copyOf(secondHalfPointers, pointers.length));
+                Arrays.copyOf(secondHalfPointers, pointers.length));
 
         // Modify sibling relations on leaf nodes
         LeafNode rightSibling = getRightSibling();
@@ -127,7 +128,10 @@ public class LeafNode extends Node {
     }
 
     /**
-     * Insert a record pointer in a new linked list to a specific index in the array of linked lists, shift the linked lists affected by the insertion and delete last linked list in the array
+     * Insert a record pointer in a new linked list to a specific index in the array
+     * of linked lists, shift the linked lists affected by the insertion and delete
+     * last linked list in the array
+     * 
      * @param pointer record pointer to be inserted
      * @param pos     index to insert
      */
@@ -136,13 +140,15 @@ public class LeafNode extends Node {
             pointers[i] = pointers[i - 1];
         }
         RecordPointer[] newPointers = new RecordPointer[RecordNode.getMaxSize()];
-		newPointers[0] = pointer;
-		RecordNode newHead = new RecordNode(1, newPointers, null);
+        newPointers[0] = pointer;
+        RecordNode newHead = new RecordNode(1, newPointers, null);
         pointers[pos] = newHead;
     }
 
     /**
-     * Delete a linked list on the specified index in the array of linked lists, then shift the linked lists accordingly
+     * Delete a linked list on the specified index in the array of linked lists,
+     * then shift the linked lists accordingly
+     * 
      * @param pos position of linked list to be deleted
      */
     public void deleteAndShift(int pos) {
@@ -160,54 +166,50 @@ public class LeafNode extends Node {
      */
     public void addSorted(int key, RecordPointer pointer) {
         int index = findIndexToInsert(key);
-        //TODO: debug and delete
-        //System.out.println(index);
-        if(index < getN() && getKeys()[index] == key) {
-        	// Insert into the already existing linked list
-        	getPointers()[index] = getPointers()[index].addPointer(pointer);
+
+        if (index < getN() && getKeys()[index] == key) {
+            // Insert into the already existing linked list
+            getPointers()[index] = getPointers()[index].addPointer(pointer);
         } else {
-        	// Create a new linked list
-        	insertAndShift(key, index);
-        	insertAndShift(pointer, index);
-            setDegree(getDegree()+1);
+            // Create a new linked list
+            insertAndShift(key, index);
+            insertAndShift(pointer, index);
+            setDegree(getDegree() + 1);
         }
     }
 
     /**
-     * Insert new linked list to leaf node while keeping the keys and linked lists sorted
+     * Insert new linked list to leaf node while keeping the keys and linked lists
+     * sorted
      * 
      * @param key     key to be inserted
      * @param pointer linked list to be inserted
      */
     public void addKey(int key, RecordNode pointer) {
         int index = findIndexToInsert(key);
-        if(getKeys()[index] == key) {
-            //TODO: debug and delete
-            System.out.println("error in deletion in leafnode");
-        } else {
-            // Insert the new linked list
-            insertAndShift(key, index);
-            RecordNode[] pointers = this.getPointers();
-            for (int i = pointers.length - 1; i > index; i--) {
-                pointers[i] = pointers[i - 1];
-            }
-            pointers[index] = pointer;
-            setDegree(getDegree()+1);
+        // Insert the new linked list
+        insertAndShift(key, index);
+        RecordNode[] pointers = this.getPointers();
+        for (int i = pointers.length - 1; i > index; i--) {
+            pointers[i] = pointers[i - 1];
         }
+        pointers[index] = pointer;
+        setDegree(getDegree() + 1);
     }
 
     /**
      * Delete records that match the key value
+     * 
      * @param key key to delete
      * @return the deleted records' linked list if found, otherwise null
      */
     public RecordNode delete(int key) {
         for (int i = 0; i < getDegree(); i++) {
             if (getKeys()[i] == key) {
-            	RecordNode temp, list = pointers[i];
-            	super.deleteAndShift(i);
+                RecordNode temp, list = pointers[i];
+                super.deleteAndShift(i);
                 deleteAndShift(i);
-                setDegree(getDegree()-1);
+                setDegree(getDegree() - 1);
                 temp = list;
                 // Increase total number of deleted nodes
                 while (temp != null) {
@@ -222,14 +224,15 @@ public class LeafNode extends Node {
 
     /**
      * Delete an entry's corresponding linked list by its index in the node
+     * 
      * @param index index of entry to be deleted
      * @return deleted entry
      */
     public RecordNode deleteByIndex(int index) {
-    	RecordNode list = pointers[index];
-    	super.deleteAndShift(index);
+        RecordNode list = pointers[index];
+        super.deleteAndShift(index);
         deleteAndShift(index);
-        setDegree(getDegree()-1);
+        setDegree(getDegree() - 1);
         return list;
     }
 

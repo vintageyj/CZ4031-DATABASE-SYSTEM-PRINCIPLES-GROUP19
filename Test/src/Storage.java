@@ -73,7 +73,6 @@ public class Storage {
      * Build B+ tree on database by inserting the records from database sequentially
      */
     public void buildIndex() {
-//        bPlusTree = new Node(Util.getNFromBlockSize(BLOCK_SIZE), this);
         // Iterates through data blocks
         for (int blockID = 0; blockID <= blockTail; ++blockID) {
             Block block = Block.fromByteArray(readBlock(blockID), RECORD_SIZE);
@@ -269,7 +268,7 @@ public class Storage {
             RecordPointer recordPointer = accessedBlocks.get(i);
             byte[] byteArray = readBlock(recordPointer.getBlockID());
             Block block = Block.fromByteArray(byteArray, getRecordSize());
-            sb.append(String.format("%d. ", i+1));
+            sb.append(String.format("%d. ", i + 1));
             sb.append(block);
             sb.append("\n");
         }
@@ -280,7 +279,7 @@ public class Storage {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < accessedNodes.size(); i++) {
             Node node = accessedNodes.get(i);
-            sb.append(String.format("%d. ", i+1));
+            sb.append(String.format("%d. ", i + 1));
             sb.append(node);
             sb.append("\n");
         }

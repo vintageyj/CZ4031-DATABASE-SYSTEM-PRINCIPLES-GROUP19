@@ -28,7 +28,8 @@ public class Main implements Constants {
             st.buildIndex();
             System.out.println("\n\nEXPERIMENT 2");
             System.out.println("Parameter n of B+ tree: " + Node.getN());
-            System.out.println("Number of nodes in B+ tree (Including linked list nodes): " + Node.getTotalNodes(st.getBPT()));
+            System.out.println(
+                    "Number of nodes in B+ tree (Including linked list nodes): " + Node.getTotalNodes(st.getBPT()));
             System.out.println("Height of B+ tree: " + st.getBPT().getHeight());
             System.out.println("Content of root node: " + st.getBPT());
             System.out.println(
@@ -38,7 +39,8 @@ public class Main implements Constants {
             List<Record> recordsExpt3 = st.searchBPT(EXPERIMENT_3_KEY);
             System.out.println("\n\nEXPERIMENT 3");
             System.out.println("Number of index nodes accessed: " + st.getNumNodeAccess());
-            System.out.println("Index nodes accessed (linked list nodes do not count since they only contain pointers):");
+            System.out
+                    .println("Index nodes accessed (linked list nodes do not count since they only contain pointers):");
             System.out.print(st.getNodeLog());
             System.out.println("Number of blocks accessed: " + st.getNumBlockAccess());
             System.out.println("Blocks accessed:");

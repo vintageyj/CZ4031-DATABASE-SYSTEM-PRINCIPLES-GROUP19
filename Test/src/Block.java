@@ -19,36 +19,39 @@ public class Block {
 
     /**
      * Construct a block with list of records and block size
-     * @param records array of records
+     * 
+     * @param records   array of records
      * @param blockSize block size
      */
 
-     /* 
-    public Block(Record[] records, int blockSize) {
-        this.records = records;
-        this.blockSize = blockSize;
-    }
-    */
+    /*
+     * public Block(Record[] records, int blockSize) {
+     * this.records = records;
+     * this.blockSize = blockSize;
+     * }
+     */
 
     /**
      * Construct an empty block
-     * @param blockSize size of one block
+     * 
+     * @param blockSize  size of one block
      * @param recordSize size of one record
      * @return empty block object
      */
-    public Block (int blockSize, int recordSize) {
-        Record[] records = new Record[blockSize/recordSize];
+    public Block(int blockSize, int recordSize) {
+        Record[] records = new Record[blockSize / recordSize];
         for (int i = 0; i < records.length; ++i) {
             records[i] = new Record();
         }
         this.records = records;
         this.blockSize = blockSize;
-        //return new Block(records, blockSize);
+        // return new Block(records, blockSize);
     }
 
     /**
      * Construct a block from byte array
-     * @param byteArr byte array containing serialized data of block
+     * 
+     * @param byteArr    byte array containing serialized data of block
      * @param recordSize size of one record
      * @return deserialized block
      */
@@ -75,6 +78,7 @@ public class Block {
 
     /**
      * Convert/serialize block to byte array
+     * 
      * @return byte array containing serialized data of block
      */
     public byte[] toByteArray() {
@@ -90,6 +94,7 @@ public class Block {
 
     /**
      * Retrieve a record given the id relative to the block
+     * 
      * @param recordId record id
      * @return record
      */
@@ -99,24 +104,21 @@ public class Block {
 
     /**
      * Update a record given the id and values
-     * @param recordId record id
+     * 
+     * @param recordId  record id
      * @param tconstStr string representation of tconst attribute
      * @param avgRating average rating attribute
-     * @param numVotes number of votes attribute
+     * @param numVotes  number of votes attribute
      */
-    /* 
-    public void updateRecord(int recordId, String tconstStr, float avgRating, int numVotes) {
-        updateRecord(recordId, tconstStr, avgRating, numVotes, false);
-    }
-    */
 
     /**
      * Update a record given the id, values and empty flag
-     * @param recordId record id
+     * 
+     * @param recordId  record id
      * @param tconstStr string representation of tconst attribute
      * @param avgRating average rating attribute
-     * @param numVotes number of votes attribute
-     * @param empty empty flag
+     * @param numVotes  number of votes attribute
+     * @param empty     empty flag
      */
     public void updateRecord(int recordId, String tconstStr, float avgRating, int numVotes, boolean empty) {
         char[] tconst = new char[10];
@@ -126,11 +128,12 @@ public class Block {
 
     /**
      * Update a record given the id and values
-     * @param recordId record id
-     * @param tconst tconst attribute
+     * 
+     * @param recordId  record id
+     * @param tconst    tconst attribute
      * @param avgRating average rating attribute
-     * @param numVotes number of votes attribute
-     * @param empty empty flag
+     * @param numVotes  number of votes attribute
+     * @param empty     empty flag
      */
     public void updateRecord(int recordId, char[] tconst, float averageRating, int numVotes, boolean empty) {
         records[recordId].setEmpty(empty);
@@ -141,6 +144,7 @@ public class Block {
 
     /**
      * Delete record given the id
+     * 
      * @param recordId record id
      */
     public void deleteRecord(int recordId) {

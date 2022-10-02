@@ -12,7 +12,8 @@ public class InternalNode extends Node {
     private Node[] pointers;
 
     /**
-     * Construct an empty internal node of height 0 specified with whether it is a root node
+     * Construct an empty internal node of height 0 specified with whether it is a
+     * root node
      * 
      * @param isRoot whether the node is a root node
      */
@@ -60,8 +61,8 @@ public class InternalNode extends Node {
             src.getPointers()[i].setParent(this);
         }
 
-        //TODO: debug and delete
-        if (getKeys()[getDegree()-1] == 0) {
+        // TODO: debug and delete
+        if (getKeys()[getDegree() - 1] == 0) {
             System.out.println("smth went wrong during merging internalnodes");
         }
         // Copy all keys and pointers of the source node to the back of the destination
@@ -75,7 +76,6 @@ public class InternalNode extends Node {
         src.deleteAll();
 
     }
-
 
     /**
      * Move the leftmost key and pointer of right internal node to left internal
@@ -98,7 +98,7 @@ public class InternalNode extends Node {
      * Move the rightmost key and pointer of left internal node to right internal
      * node
      * 
-     * @param left  left internal node (source)
+     * @param left left internal node (source)
      */
     public void moveEntryFromLeftInternalNode(InternalNode left) {
         // Delete the last key and pointer of the node on the left
@@ -153,10 +153,6 @@ public class InternalNode extends Node {
                 Arrays.copyOf(secondHalfKeys, keys.length),
                 Arrays.copyOf(secondHalfPointers, pointers.length));
 
-        // TODO: Debug and delete this
-        if (newNode.getDegree() < Math.floor(getN() / 2.0)) {
-            System.out.println("internal node splitting fked up!!!");
-        }
         // Set the new node as parent of moved nodes
         for (int i = 0; i < newNode.getDegree(); i++) {
             newNode.getPointers()[i].setParent(newNode);
@@ -173,12 +169,12 @@ public class InternalNode extends Node {
      * @return index of child node
      */
     public int findIndexOfNode(int key) {
-        for (int i = 0; i < getDegree()-2; i++) {
+        for (int i = 0; i < getDegree() - 2; i++) {
             if (key < getKeys()[i]) {
                 return i;
             }
         }
-        return getDegree()-1;
+        return getDegree() - 1;
     }
 
     /**
@@ -291,7 +287,7 @@ public class InternalNode extends Node {
         StringBuilder sb = new StringBuilder();
         sb.append("Internal Node: ");
         sb.append("[");
-        for (int i = 0; i < getDegree()-1; i++) {
+        for (int i = 0; i < getDegree() - 1; i++) {
             sb.append(getKeys()[i]);
             sb.append(", ");
         }
