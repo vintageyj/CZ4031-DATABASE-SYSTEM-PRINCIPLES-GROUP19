@@ -60,10 +60,6 @@ public class InternalNode extends Node {
             src.getPointers()[i].setParent(this);
         }
 
-        //TODO: debug and delete
-        if (getKeys()[getDegree()-1] == 0) {
-            System.out.println("smth went wrong during merging internalnodes");
-        }
         // Copy all keys and pointers of the source node to the back of the destination
         // node
         System.arraycopy(src.getKeys(), 0, getKeys(), getDegree(), src.getDegree() - 1);
@@ -153,10 +149,6 @@ public class InternalNode extends Node {
                 Arrays.copyOf(secondHalfKeys, keys.length),
                 Arrays.copyOf(secondHalfPointers, pointers.length));
 
-        // TODO: Debug and delete this
-        if (newNode.getDegree() < Math.floor(getN() / 2.0)) {
-            System.out.println("internal node splitting fked up!!!");
-        }
         // Set the new node as parent of moved nodes
         for (int i = 0; i < newNode.getDegree(); i++) {
             newNode.getPointers()[i].setParent(newNode);

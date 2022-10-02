@@ -52,7 +52,6 @@ public abstract class Node {
         this.parent = parent;
     }
 
-    // TODO: how will we refactor storage for logging purposes?
     /**
      * Search for records with the specified value
      * 
@@ -170,13 +169,6 @@ public abstract class Node {
 
             // Find index of pointer to leftmost node that can be inserted with the entry
             int child = curNode.findIndexOfNode(key);
-            //TODO: debug and delete
-//            System.out.println("Child:" +child);
-//            System.out.println("Internal Node:"+curNode);
-//            System.out.println(curNode.getDegree());
-//            for(int i = 0; i < curNode.getDegree(); i++) {
-//                System.out.println(curNode.getPointers()[i]);
-//            }
             
             // Insert entry to subtree
             splitChild = curNode.getPointers()[child].bPlusInsert(key, pointer);
@@ -189,29 +181,18 @@ public abstract class Node {
                     // No nodes were split after insertion
                     splitChild = null;
                 } else {
-                    //TODO:debug
-//                    System.out.println("split happened at internal node");
-                    // Split node if it is full
                     splitChild = curNode.splitNode(splitChild);
                     split = true;
                 }
             }
         } else if (this instanceof LeafNode) {
             LeafNode curNode = (LeafNode) this;
-            //TODO: debug and delete
-            if(getHeight() != 0)
-            System.out.println("This node's height is: "+getHeight());
-//            System.out.println("degree of leafnode before insertion: "+curNode.getDegree());
-//            System.out.println("key to insert: "+key);
-//            System.out.println("node to insert key into:"+curNode);
             if (curNode.getDegree() < getN() || Arrays.stream(curNode.getKeys()).anyMatch(i -> i == key)) {
                 // Add entry to leaf node if it is not full or if key is already present
             	curNode.addSorted(key, pointer);
                 // No nodes were split after insertion
             	splitChild = null;
             } else {
-                //TODO:debug
-//                System.out.println("split happened at leaf");
                 // Split leaf if it is full
                 splitChild = curNode.splitLeaf(key, pointer);
                 if (splitChild != null) {
@@ -222,8 +203,6 @@ public abstract class Node {
 
         if (this.isRoot()) {
         	if (split) {
-        	    //TODO:debug
-//        	    System.out.println("split happened at root");
         		// If root is split, add a new node to be the root
         	    this.setRoot(false);
                 InternalNode newNode = new InternalNode(true);
@@ -233,18 +212,6 @@ public abstract class Node {
                 newNode.addKey(splitChild.getKey(), 0);
                 setParent(newNode);
                 splitChild.getNode().setParent(newNode);
-                //TODO:debug
-//                System.out.println("new root created:"+newNode);
-                //TODO: finish debugging and delete this
-                if(getHeight() != splitChild.getNode().getHeight()) {
-                	System.out.println("Height tracking fked up somewhere");
-                	System.out.println("This node: "+this);
-                	System.out.println("This node's height: "+getHeight());
-                	System.out.println("Split node: "+splitChild.getNode());
-                	System.out.println("Split node's height: "+splitChild.getNode().getHeight());
-                }
-                //TODO:debug
-//                System.out.println("height of new root: "+newNode.getHeight());
                 return new KeyNode(0, newNode);
         	} else {
         		// Return the root node to calling method
@@ -273,7 +240,6 @@ public abstract class Node {
         return result.getParentNode();
     }
 
-    //TODO: count all deletions
     /**
      * Internal implementation of deletion in B+ tree
      * 
@@ -302,10 +268,6 @@ public abstract class Node {
 
             // Set current node since parent of traversed nodes in the lower level may be
             // different after recursion
-            //TODO: remove after debugging
-            if (node != result.getParentNode()) {
-                System.out.println("parent changed, figure out why");
-            }
             node = (InternalNode) result.getParentNode();
             found = result.isFound();
 
@@ -524,8 +486,6 @@ public abstract class Node {
         }
         if(this instanceof InternalNode) {
             high = this.getDegree() - 2;
-            //TODO: debug
-//            System.out.println("high is: "+high);
         } else {
             high = this.getDegree() - 1;
         }
@@ -599,7 +559,6 @@ public abstract class Node {
         return total + 1;
     }
 
-    //TODO: is this redundant now???
     /**
      * Fix the keys in the current internal node
      */
@@ -616,7 +575,6 @@ public abstract class Node {
         }
     }
 
-    //TODO: is this redundant now???
     /**
      * Find the smallest key in the subtree rooted at the node
      * @return smallest key in the subtree, or -1 if error occurs
