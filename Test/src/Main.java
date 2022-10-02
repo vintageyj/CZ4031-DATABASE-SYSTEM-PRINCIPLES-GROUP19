@@ -38,7 +38,7 @@ public class Main implements Constants {
             List<Record> recordsExpt3 = st.searchBPT(EXPERIMENT_3_KEY);
             System.out.println("\n\nEXPERIMENT 3");
             System.out.println("Number of index nodes accessed: " + st.getNumNodeAccess());
-            System.out.println("Index nodes accessed (linked list nodes do not count since they only contain pointers):");
+            System.out.println("Index nodes accessed (linked list nodes will not be shown since they only contain pointers and no keys):");
             System.out.print(st.getNodeLog());
             System.out.println("Number of blocks accessed: " + st.getNumBlockAccess());
             System.out.println("Blocks accessed:");
