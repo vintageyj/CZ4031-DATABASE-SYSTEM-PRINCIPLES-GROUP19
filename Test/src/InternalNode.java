@@ -61,10 +61,6 @@ public class InternalNode extends Node {
             src.getPointers()[i].setParent(this);
         }
 
-        // TODO: debug and delete
-        if (getKeys()[getDegree() - 1] == 0) {
-            System.out.println("smth went wrong during merging internalnodes");
-        }
         // Copy all keys and pointers of the source node to the back of the destination
         // node
         System.arraycopy(src.getKeys(), 0, getKeys(), getDegree(), src.getDegree() - 1);

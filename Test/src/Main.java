@@ -11,7 +11,7 @@ public class Main implements Constants {
             System.out.printf("BLOCK SIZE: %d bytes\n", blockSize);
 
             Storage st = new Storage(blockSize, RECORD_SIZE, MEMORY_SIZE);
-            st.initWithTSV("C:/Users/tomth/demos/CZ4031-DATABASE-SYSTEM-PRINCIPLES-GROUP19/Test/data.tsv");
+            st.initWithTSV("data.tsv");
 
             // Experiment 1
             System.out.println("EXPERIMENT 1");

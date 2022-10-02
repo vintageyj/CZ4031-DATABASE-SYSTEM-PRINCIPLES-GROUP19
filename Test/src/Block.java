@@ -24,13 +24,6 @@ public class Block {
      * @param blockSize block size
      */
 
-    /*
-     * public Block(Record[] records, int blockSize) {
-     * this.records = records;
-     * this.blockSize = blockSize;
-     * }
-     */
-
     /**
      * Construct an empty block
      * 
