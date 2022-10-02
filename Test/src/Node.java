@@ -36,13 +36,11 @@ public abstract class Node {
 
     /**
      * Node constructor
-     * 
-     * @param n      maximum number of keys
-     * @param height height of current node
-     * @param degree current degree of node
-     * @param isRoot whether the node is root node
-     * @param keys   array of keys
-     * @param parent parent node
+     * @param height
+     * @param degree
+     * @param isRoot
+     * @param keys
+     * @param parent
      */
     public Node(int height, int degree, boolean isRoot, int[] keys, InternalNode parent) {
         this.height = height;
@@ -69,12 +67,12 @@ public abstract class Node {
     }
 
     /**
-     * Search for records with the value within the lower and upper bounds
+     * Search for records with value within the given lower and upper bounds
      * 
      * @param lower lower bound of the search key, inclusive (numVotes)
      * @param upper upper bound of the search key, inclusive (numVotes)
      * @return a list of record addresses with a key value ranging from the lower to
-     *         the upper bounds
+     *         upper bounds
      */
     public ArrayList<RecordPointer> search(int lower, int upper) {
         // Reset logs for experiment
@@ -84,7 +82,8 @@ public abstract class Node {
     }
 
     /**
-     * Searching in the B+ tree
+     * Search for records with value within the given lower and upper bounds
+     * within the B+ Tree
      * 
      * @param results list for storing results
      * @param lower   lower bound of search
@@ -152,14 +151,11 @@ public abstract class Node {
     }
 
     /**
-     * Insertion in B+ tree (recursive)
-     * 
-     * @param node       current node
-     * @param entry      entry to be inserted
-     * @param splitChild key-node pair which points to split child, null if child
-     *                   was not split
+     * Recursive insertion in B+ tree
+     * @param key
+     * @param pointer
      * @return a KeyNode of either the new root or the split child if current node
-     *         was split, otherwise null
+     * was split, otherwise null
      */
     public KeyNode bPlusInsert(int key, RecordPointer pointer) {
         KeyNode splitChild = null;

@@ -15,7 +15,7 @@ public class Storage {
 
     private byte[] blocks;
     private int blockTail;
-    private LinkedList<RecordPointer> buffer; // changed emptyRecord to buffer? Buffer to store the list of available
+    private LinkedList<RecordPointer> buffer; // Buffer to store the list of available
                                               // spaces to be populated by KeyPointers
 
     private Node bPlusTree;

@@ -4,12 +4,12 @@
 public class RecordPointer {
 
     /**
-     * Id of block
+     * Block ID
      */
     private int blockID;
 
     /**
-     * Id of record
+     * Record ID
      */
     private int recordID;
 

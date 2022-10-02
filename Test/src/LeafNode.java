@@ -79,7 +79,7 @@ public class LeafNode extends Node {
      * Split full leaf node into two parts (one of which may be an overflow leaf
      * node)
      * 
-     * @param node  leaf node to be split
+     * @param key split key
      * @param entry entry to be added
      * @return pair of the smallest key in second node and pointer to second node,
      *         or null if an overflow leaf node was created

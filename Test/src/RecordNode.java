@@ -60,7 +60,6 @@ public class RecordNode {
     
     /**
      * Retrieve all record pointers from the linked list
-     * @param pos index of the record pointer to be retrieved
      * @return record pointer
      */
     public ArrayList<RecordPointer> retrievePointers() {
