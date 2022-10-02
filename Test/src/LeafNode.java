@@ -166,7 +166,6 @@ public class LeafNode extends Node {
      */
     public void addSorted(int key, RecordPointer pointer) {
         int index = findIndexToInsert(key);
-
         if (index < getN() && getKeys()[index] == key) {
             // Insert into the already existing linked list
             getPointers()[index] = getPointers()[index].addPointer(pointer);
